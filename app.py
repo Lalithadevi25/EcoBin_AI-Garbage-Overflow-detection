@@ -18,7 +18,7 @@ from zoneinfo import ZoneInfo
 # LIVE BROWSER GPS
 # ============================================================
 
-from streamlit_geolocation import get_geolocation
+from streamlit_geolocation import streamlit_geolocation
 
 
 # ============================================================
@@ -52,11 +52,20 @@ if "camera_result" not in st.session_state:
 if "video_result" not in st.session_state:
     st.session_state.video_result = None
 
-if "live_location" not in st.session_state:
-    st.session_state.live_location = None
+if "live_latitude" not in st.session_state:
+    st.session_state.live_latitude = None
 
-if "location_name" not in st.session_state:
-    st.session_state.location_name = "Location not detected"
+if "live_longitude" not in st.session_state:
+    st.session_state.live_longitude = None
+
+if "live_accuracy" not in st.session_state:
+    st.session_state.live_accuracy = None
+
+if "live_area" not in st.session_state:
+    st.session_state.live_area = None
+
+if "location_loaded" not in st.session_state:
+    st.session_state.location_loaded = False
 
 
 # ============================================================
@@ -174,7 +183,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 
 div.stButton > button {
     width: 100%;
-    height: 45px;
+    min-height: 45px;
     background: #ffffff !important;
     color: #334155 !important;
     border: 1px solid #d5dce6 !important;
@@ -223,8 +232,9 @@ label {
     border: 2px solid #3b82f6;
     border-radius: 12px;
     padding: 18px;
-    margin-top: 12px;
+    margin-top: 10px;
     margin-bottom: 15px;
+    color: #1e3a8a !important;
 }
 
 .email-success {
@@ -272,6 +282,18 @@ label {
     font-size: 13px;
 }
 
+.logo-container {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.location-title {
+    color: #17345f !important;
+    font-size: 17px !important;
+    font-weight: 800 !important;
+    margin-bottom: 10px;
+}
+
 @media(max-width: 900px) {
 
     .block-container {
@@ -309,6 +331,35 @@ label {
 
 
 # ============================================================
+# LOGO
+# ============================================================
+
+def show_logo(width=110):
+
+    logo_path = os.path.join(
+        os.path.dirname(__file__),
+        "logo.png"
+    )
+
+    if os.path.exists(logo_path):
+
+        st.markdown(
+            '<div class="logo-container">',
+            unsafe_allow_html=True
+        )
+
+        st.image(
+            logo_path,
+            width=width
+        )
+
+        st.markdown(
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+
+# ============================================================
 # LOAD YOLO MODEL
 # ============================================================
 
@@ -330,56 +381,30 @@ def load_model():
 
 
 # ============================================================
-# LIVE LOCATION
+# LIVE LOCATION - REVERSE GEOCODING
 # ============================================================
 
-def get_live_location():
-
-    try:
-
-        location_data = get_geolocation()
-
-        if location_data is None:
-            return None
-
-        if not isinstance(location_data, dict):
-            return None
-
-        latitude = location_data.get("latitude")
-        longitude = location_data.get("longitude")
-
-        if latitude is None or longitude is None:
-            return None
-
-        return {
-            "latitude": float(latitude),
-            "longitude": float(longitude)
-        }
-
-    except Exception:
-        return None
-
-
-# ============================================================
-# REVERSE GEOCODING
-# ============================================================
-
+@st.cache_data(ttl=300)
 def reverse_geocode(latitude, longitude):
 
     try:
 
-        url = "https://nominatim.openstreetmap.org/reverse"
+        url = (
+            "https://nominatim.openstreetmap.org/reverse"
+        )
 
         params = {
             "lat": latitude,
             "lon": longitude,
-            "format": "json",
+            "format": "jsonv2",
+            "addressdetails": 1,
             "zoom": 18,
-            "addressdetails": 1
+            "accept-language": "en"
         }
 
         headers = {
-            "User-Agent": "EcoBin-AI-Garbage-Detection/1.0"
+            "User-Agent":
+                "EcoBin-AI-Garbage-Overflow-Detection/1.0"
         }
 
         response = requests.get(
@@ -389,42 +414,70 @@ def reverse_geocode(latitude, longitude):
             timeout=10
         )
 
-        if response.status_code != 200:
-            return "Area name unavailable"
+        response.raise_for_status()
 
         data = response.json()
 
-        address = data.get("address", {})
+        address = data.get(
+            "address",
+            {}
+        )
 
-        # Most specific locality first
+        # Try to get the most useful local area
         area = (
-            address.get("neighbourhood")
-            or address.get("suburb")
+            address.get("suburb")
+            or address.get("neighbourhood")
             or address.get("village")
             or address.get("town")
             or address.get("city")
             or address.get("municipality")
-            or address.get("county")
         )
 
-        state = address.get("state", "")
-        country = address.get("country", "")
+        city = (
+            address.get("city")
+            or address.get("town")
+            or address.get("village")
+            or address.get("municipality")
+        )
 
-        if area and state:
+        state = address.get(
+            "state",
+            ""
+        )
 
-            return f"{area}, {state}"
+        postcode = address.get(
+            "postcode",
+            ""
+        )
+
+        road = address.get(
+            "road",
+            ""
+        )
+
+        parts = []
 
         if area:
+            parts.append(area)
 
-            return area
+        if city and city != area:
+            parts.append(city)
 
-        if state and country:
+        if state:
+            parts.append(state)
 
-            return f"{state}, {country}"
+        if postcode:
+            parts.append(postcode)
 
-        if country:
+        if parts:
+            return ", ".join(parts)
 
-            return country
+        display_name = data.get(
+            "display_name"
+        )
+
+        if display_name:
+            return display_name
 
         return "Area name unavailable"
 
@@ -434,113 +487,91 @@ def reverse_geocode(latitude, longitude):
 
 
 # ============================================================
-# UPDATE LOCATION
+# GET LIVE LOCATION
 # ============================================================
 
-def update_live_location():
+def get_live_location():
 
-    location = get_live_location()
+    location = streamlit_geolocation()
 
-    if location is None:
+    if not location:
+        return
 
-        return False
-
-    latitude = location["latitude"]
-    longitude = location["longitude"]
-
-    st.session_state.live_location = location
-
-    area_name = reverse_geocode(
-        latitude,
-        longitude
+    latitude = location.get(
+        "latitude"
     )
 
-    st.session_state.location_name = area_name
+    longitude = location.get(
+        "longitude"
+    )
 
-    return True
+    accuracy = location.get(
+        "accuracy"
+    )
 
-
-# ============================================================
-# LOCATION DISPLAY
-# ============================================================
-
-def display_live_location():
-
-    location = st.session_state.live_location
-
-    if location is None:
-
-        st.markdown(
-            """
-<div class="location-box">
-
-<b>📍 Live Location</b><br><br>
-
-Location permission is required.<br>
-Please click <b>Allow</b> in your browser when location access is requested.
-
-</div>
-""",
-            unsafe_allow_html=True
-        )
+    if latitude is None or longitude is None:
 
         return
 
-    latitude = location["latitude"]
-    longitude = location["longitude"]
+    try:
 
-    area_name = st.session_state.location_name
+        latitude = float(latitude)
+        longitude = float(longitude)
 
-    google_maps_link = (
-        f"https://www.google.com/maps/search/?api=1"
-        f"&query={latitude},{longitude}"
-    )
+        st.session_state.live_latitude = latitude
+        st.session_state.live_longitude = longitude
+        st.session_state.live_accuracy = accuracy
 
-    st.markdown(
-        f"""
-<div class="location-box">
+        area = reverse_geocode(
+            latitude,
+            longitude
+        )
 
-<h3>📍 Live Detection Location</h3>
+        st.session_state.live_area = area
 
-<b>Area:</b> {area_name}<br><br>
+        st.session_state.location_loaded = True
 
-<b>Latitude:</b> {latitude:.6f}<br><br>
+    except Exception:
 
-<b>Longitude:</b> {longitude:.6f}<br><br>
-
-<b>📅 Location Source:</b> Live Browser GPS<br><br>
-
-<a href="{google_maps_link}" target="_blank">
-🗺️ Open Live Location in Google Maps
-</a>
-
-</div>
-""",
-        unsafe_allow_html=True
-    )
+        st.session_state.location_loaded = False
 
 
 # ============================================================
-# GET LOCATION TEXT
+# LOCATION TEXT
 # ============================================================
 
 def get_location():
 
-    location = st.session_state.live_location
+    area = st.session_state.live_area
+    latitude = st.session_state.live_latitude
+    longitude = st.session_state.live_longitude
 
-    if location is None:
+    if area and latitude is not None and longitude is not None:
 
-        return "Live location not available"
+        return (
+            f"{area}\n"
+            f"Latitude: {latitude:.6f}\n"
+            f"Longitude: {longitude:.6f}"
+        )
 
-    area_name = st.session_state.location_name
+    return "Live location not available"
 
-    latitude = location["latitude"]
-    longitude = location["longitude"]
+
+# ============================================================
+# LOCATION MAP URL
+# ============================================================
+
+def get_map_url():
+
+    latitude = st.session_state.live_latitude
+    longitude = st.session_state.live_longitude
+
+    if latitude is None or longitude is None:
+        return None
 
     return (
-        f"{area_name} "
-        f"(Latitude: {latitude:.6f}, "
-        f"Longitude: {longitude:.6f})"
+        f"https://www.google.com/maps/search/?api=1"
+        f"&query={latitude},{longitude}"
     )
 
 
@@ -560,6 +591,88 @@ def get_current_time():
 
 
 # ============================================================
+# LOCATION DISPLAY
+# ============================================================
+
+def display_live_location():
+
+    st.markdown(
+        """
+<div class="location-title">
+    📍 Live Location
+</div>
+""",
+        unsafe_allow_html=True
+    )
+
+    get_live_location()
+
+    if st.session_state.location_loaded:
+
+        area = st.session_state.live_area
+        latitude = st.session_state.live_latitude
+        longitude = st.session_state.live_longitude
+        accuracy = st.session_state.live_accuracy
+
+        accuracy_text = ""
+
+        if accuracy is not None:
+
+            try:
+
+                accuracy_text = (
+                    f"{float(accuracy):.1f} meters"
+                )
+
+            except Exception:
+
+                accuracy_text = str(
+                    accuracy
+                )
+
+        st.markdown(
+            f"""
+<div class="location-box">
+
+<b>📍 Current Area:</b>
+{area}<br><br>
+
+<b>Latitude:</b>
+{latitude:.6f}<br>
+
+<b>Longitude:</b>
+{longitude:.6f}<br>
+
+<b>GPS Accuracy:</b>
+{accuracy_text if accuracy_text else "Available"}<br><br>
+
+<b>🕒 Location Time:</b>
+{get_current_time()}
+
+</div>
+""",
+            unsafe_allow_html=True
+        )
+
+        map_url = get_map_url()
+
+        if map_url:
+
+            st.link_button(
+                "🗺️ Open Live Location in Google Maps",
+                map_url,
+                use_container_width=True
+            )
+
+    else:
+
+        st.info(
+            "📍 Click the location button above and "
+            "Allow location permission in your browser."
+        )
+
+
+# ============================================================
 # SEND EMAIL
 # ============================================================
 
@@ -567,9 +680,17 @@ def send_email_alert():
 
     try:
 
-        sender_email = st.secrets["EMAIL_SENDER"]
-        sender_password = st.secrets["EMAIL_PASSWORD"]
-        receiver_email = st.secrets["EMAIL_RECEIVER"]
+        sender_email = st.secrets[
+            "EMAIL_SENDER"
+        ]
+
+        sender_password = st.secrets[
+            "EMAIL_PASSWORD"
+        ]
+
+        receiver_email = st.secrets[
+            "EMAIL_RECEIVER"
+        ]
 
         message = EmailMessage()
 
@@ -579,22 +700,6 @@ def send_email_alert():
 
         message["From"] = sender_email
         message["To"] = receiver_email
-
-        location = st.session_state.live_location
-
-        if location:
-
-            latitude = location["latitude"]
-            longitude = location["longitude"]
-
-            maps_link = (
-                f"https://www.google.com/maps/search/?api=1"
-                f"&query={latitude},{longitude}"
-            )
-
-        else:
-
-            maps_link = "Live location unavailable"
 
         message.set_content(
             f"""
@@ -606,7 +711,7 @@ Live Location:
 {get_location()}
 
 Google Maps:
-{maps_link}
+{get_map_url() or "Location unavailable"}
 
 Date & Time:
 {get_current_time()}
@@ -615,7 +720,7 @@ Status:
 Violation Detected
 
 Detection Class:
-overclass
+Overflow
 
 This alert was automatically generated by EcoBin AI.
 """
@@ -633,7 +738,9 @@ This alert was automatically generated by EcoBin AI.
                 sender_password
             )
 
-            server.send_message(message)
+            server.send_message(
+                message
+            )
 
         return True
 
@@ -663,6 +770,7 @@ def generate_alert():
 
     previous = st.session_state.last_alert_time
 
+    # 5 minute cooldown
     if previous is not None:
 
         difference = (
@@ -688,7 +796,8 @@ def generate_alert():
 </div>
 
 <div class="email-success-text">
-The garbage overflow alert has been successfully sent to the configured email address.
+The garbage overflow alert has been successfully
+sent to the configured email address.
 </div>
 
 </div>
@@ -703,10 +812,19 @@ The garbage overflow alert has been successfully sent to the configured email ad
 
 def normalize_class_name(name):
 
-    name = str(name).lower().strip()
+    name = str(
+        name
+    ).lower().strip()
 
-    name = name.replace("_", " ")
-    name = name.replace("-", " ")
+    name = name.replace(
+        "_",
+        " "
+    )
+
+    name = name.replace(
+        "-",
+        " "
+    )
 
     return name
 
@@ -753,18 +871,19 @@ def extract_detections(result):
 
 def get_final_prediction(detections):
 
-    over_detections = [
+    # Model has ONLY two classes:
+    # Normal and Overflow
+
+    overflow_detections = [
 
         d for d in detections
 
         if d["class"] in [
-
-            "overclass",
             "overflow",
+            "overclass",
             "garbage overflow",
             "overflowing",
             "overflowed"
-
         ]
 
         and d["confidence"] >= 0.30
@@ -776,20 +895,18 @@ def get_final_prediction(detections):
         d for d in detections
 
         if d["class"] in [
-
             "normal",
             "normal bin",
             "non overflow",
             "non-overflow"
-
         ]
 
     ]
 
-    if over_detections:
+    if overflow_detections:
 
         best = max(
-            over_detections,
+            overflow_detections,
             key=lambda x: x["confidence"]
         )
 
@@ -820,9 +937,14 @@ def get_final_prediction(detections):
 # PREDICT IMAGE
 # ============================================================
 
-def predict_image(image, model):
+def predict_image(
+    image,
+    model
+):
 
-    image_np = np.array(image)
+    image_np = np.array(
+        image
+    )
 
     results = model.predict(
         source=image_np,
@@ -836,7 +958,10 @@ def predict_image(image, model):
         result
     )
 
-    return result, detections
+    return (
+        result,
+        detections
+    )
 
 
 # ============================================================
@@ -871,6 +996,10 @@ def display_prediction(
 
     st.write("")
 
+    # ========================================================
+    # OVERFLOW
+    # ========================================================
+
     if status == "GARBAGE OVERFLOW":
 
         st.markdown(
@@ -879,13 +1008,13 @@ def display_prediction(
 
 <h3>🚨 Garbage Overflow Detected</h3>
 
-<b>Detection:</b> overclass<br><br>
+<b>Detection:</b> Overflow<br><br>
 
 <b>Confidence:</b>
 {confidence * 100:.2f}%<br><br>
 
-<b>📍 Location:</b>
-{get_location()}<br><br>
+<b>📍 Location:</b><br>
+{get_location().replace(chr(10), "<br>")}<br><br>
 
 <b>🕒 Date & Time:</b>
 {get_current_time()}<br><br>
@@ -898,9 +1027,11 @@ Violation Detected
             unsafe_allow_html=True
         )
 
-        display_live_location()
-
         generate_alert()
+
+    # ========================================================
+    # NORMAL
+    # ========================================================
 
     elif status == "NORMAL":
 
@@ -910,13 +1041,13 @@ Violation Detected
 
 <h3>✅ No Garbage Overflow Detected</h3>
 
-<b>Detection:</b> normal<br><br>
+<b>Detection:</b> Normal<br><br>
 
 <b>Confidence:</b>
 {confidence * 100:.2f}%<br><br>
 
-<b>📍 Current Location:</b>
-{get_location()}<br><br>
+<b>📍 Location:</b><br>
+{get_location().replace(chr(10), "<br>")}<br><br>
 
 <b>Status:</b>
 Normal
@@ -926,12 +1057,20 @@ Normal
             unsafe_allow_html=True
         )
 
+    # ========================================================
+    # NO CLEAR DETECTION
+    # ========================================================
+
     else:
 
         st.warning(
             "⚠️ No clear garbage condition detected. "
             "Please try another image/video."
         )
+
+    # ========================================================
+    # DETECTION DETAILS
+    # ========================================================
 
     if detections:
 
@@ -953,7 +1092,10 @@ Normal
 # PROCESS VIDEO
 # ============================================================
 
-def process_video(video_path, model):
+def process_video(
+    video_path,
+    model
+):
 
     cap = cv2.VideoCapture(
         video_path
@@ -992,12 +1134,17 @@ def process_video(video_path, model):
         )
     )
 
+    # ========================================================
+    # TEMP FILES
+    # ========================================================
+
     raw_output = tempfile.NamedTemporaryFile(
         delete=False,
         suffix=".mp4"
     )
 
     raw_output_path = raw_output.name
+
     raw_output.close()
 
     h264_output = tempfile.NamedTemporaryFile(
@@ -1006,7 +1153,12 @@ def process_video(video_path, model):
     )
 
     h264_output_path = h264_output.name
+
     h264_output.close()
+
+    # ========================================================
+    # VIDEO WRITER
+    # ========================================================
 
     fourcc = cv2.VideoWriter_fourcc(
         *"mp4v"
@@ -1028,6 +1180,10 @@ def process_video(video_path, model):
     best_overflow_confidence = 0.0
 
     progress = st.progress(0)
+
+    # ========================================================
+    # PROCESS EVERY FRAME
+    # ========================================================
 
     while True:
 
@@ -1052,6 +1208,10 @@ def process_video(video_path, model):
             detections
         )
 
+        # ====================================================
+        # COUNT
+        # ====================================================
+
         if status == "GARBAGE OVERFLOW":
 
             overflow_count += 1
@@ -1066,7 +1226,15 @@ def process_video(video_path, model):
             normal_count += 1
             detection_count += 1
 
+        # ====================================================
+        # ANNOTATED FRAME
+        # ====================================================
+
         annotated_frame = result.plot()
+
+        # ====================================================
+        # STATUS OVERLAY
+        # ====================================================
 
         if status == "GARBAGE OVERFLOW":
 
@@ -1131,6 +1299,10 @@ def process_video(video_path, model):
                 cv2.LINE_AA
             )
 
+        # ====================================================
+        # CONFIDENCE
+        # ====================================================
+
         if confidence > 0:
 
             cv2.putText(
@@ -1144,11 +1316,19 @@ def process_video(video_path, model):
                 cv2.LINE_AA
             )
 
+        # ====================================================
+        # WRITE
+        # ====================================================
+
         writer.write(
             annotated_frame
         )
 
         frame_number += 1
+
+        # ====================================================
+        # PROGRESS
+        # ====================================================
 
         if total_frames > 0:
 
@@ -1159,34 +1339,51 @@ def process_video(video_path, model):
                 )
             )
 
+    # ========================================================
+    # RELEASE
+    # ========================================================
+
     cap.release()
 
     writer.release()
 
     progress.empty()
 
+    # ========================================================
+    # H264 CONVERSION
+    # ========================================================
+
     try:
 
-        ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+        ffmpeg_path = (
+            imageio_ffmpeg.get_ffmpeg_exe()
+        )
 
         command = [
 
             ffmpeg_path,
+
             "-y",
+
             "-i",
             raw_output_path,
+
             "-c:v",
             "libx264",
+
             "-preset",
             "fast",
+
             "-crf",
             "23",
+
             "-pix_fmt",
             "yuv420p",
+
             "-movflags",
             "+faststart",
-            h264_output_path
 
+            h264_output_path
         ]
 
         subprocess.run(
@@ -1196,11 +1393,19 @@ def process_video(video_path, model):
             check=True
         )
 
-        final_video_path = h264_output_path
+        final_video_path = (
+            h264_output_path
+        )
 
     except Exception:
 
-        final_video_path = raw_output_path
+        final_video_path = (
+            raw_output_path
+        )
+
+    # ========================================================
+    # READ VIDEO
+    # ========================================================
 
     try:
 
@@ -1216,6 +1421,10 @@ def process_video(video_path, model):
     except Exception:
 
         output_video_bytes = None
+
+    # ========================================================
+    # CLEANUP
+    # ========================================================
 
     try:
 
@@ -1238,6 +1447,10 @@ def process_video(video_path, model):
     except Exception:
 
         pass
+
+    # ========================================================
+    # FINAL VIDEO RESULT
+    # ========================================================
 
     if detection_count == 0:
 
@@ -1268,6 +1481,14 @@ def process_video(video_path, model):
 
 if st.session_state.page == "home":
 
+    # ========================================================
+    # LOGO
+    # ========================================================
+
+    show_logo(
+        width=120
+    )
+
     st.markdown(
         """
 <div class="main-title">
@@ -1281,6 +1502,10 @@ if st.session_state.page == "home":
         [0.38, 0.62],
         gap="large"
     )
+
+    # ========================================================
+    # LEFT
+    # ========================================================
 
     with left_col:
 
@@ -1316,6 +1541,10 @@ if st.session_state.page == "home":
 
             st.rerun()
 
+    # ========================================================
+    # RIGHT
+    # ========================================================
+
     with right_col:
 
         st.markdown(
@@ -1340,9 +1569,11 @@ YOLOv8 object detection.
 
 The system analyzes images, camera-captured photos,
 and CCTV/video files to identify garbage overflow
-conditions. The trained YOLOv8 model classifies the
-detected garbage condition into two classes:
-<b>overclass</b> and <b>normal</b>.
+conditions.
+
+The trained YOLOv8 model classifies the detected
+garbage condition into two classes:
+<b>Normal</b> and <b>Overflow</b>.
 
 When an overflow condition is detected, EcoBin AI
 automatically generates an alert containing the
@@ -1360,10 +1591,18 @@ improve cleanliness in public and residential areas.
     st.write("")
     st.write("")
 
+    # ========================================================
+    # TEAM DETAILS
+    # ========================================================
+
     team_col, gmail_col, guide_col = st.columns(
         [1.25, 1.25, 0.75],
         gap="large"
     )
+
+    # ========================================================
+    # TEAM MEMBERS
+    # ========================================================
 
     with team_col:
 
@@ -1394,6 +1633,10 @@ improve cleanliness in public and residential areas.
                 unsafe_allow_html=True
             )
 
+    # ========================================================
+    # GMAIL
+    # ========================================================
+
     with gmail_col:
 
         with st.container(
@@ -1422,6 +1665,10 @@ nadimpallisushmasri29@gmail.com
 """,
                 unsafe_allow_html=True
             )
+
+    # ========================================================
+    # GUIDE
+    # ========================================================
 
     with guide_col:
 
@@ -1467,6 +1714,10 @@ nadimpallisushmasri29@gmail.com
                 unsafe_allow_html=True
             )
 
+    # ========================================================
+    # FOOTER
+    # ========================================================
+
     st.markdown(
         """
 <div class="footer-text">
@@ -1482,6 +1733,14 @@ nadimpallisushmasri29@gmail.com
 # ============================================================
 
 else:
+
+    # ========================================================
+    # LOGO
+    # ========================================================
+
+    show_logo(
+        width=90
+    )
 
     st.markdown(
         """
@@ -1502,63 +1761,6 @@ else:
     )
 
     # ========================================================
-    # LIVE LOCATION SECTION
-    # ========================================================
-
-    st.markdown(
-        """
-<div class="detection-box-title">
-    📍 Live Location
-</div>
-""",
-        unsafe_allow_html=True
-    )
-
-    location_col1, location_col2 = st.columns(
-        [3, 1]
-    )
-
-    with location_col1:
-
-        if st.session_state.live_location is None:
-
-            st.info(
-                "Click 'Get Live Location' and allow location permission in your browser."
-            )
-
-        else:
-
-            display_live_location()
-
-    with location_col2:
-
-        if st.button(
-            "📍 Get Live Location",
-            key="get_location",
-            use_container_width=True
-        ):
-
-            with st.spinner(
-                "Getting your live location..."
-            ):
-
-                success = update_live_location()
-
-            if success:
-
-                st.success(
-                    "Live location detected!"
-                )
-
-                st.rerun()
-
-            else:
-
-                st.error(
-                    "Location permission denied or unavailable."
-                )
-
-    # ========================================================
     # BACK BUTTON
     # ========================================================
 
@@ -1570,6 +1772,14 @@ else:
         st.session_state.page = "home"
 
         st.rerun()
+
+    st.write("")
+
+    # ========================================================
+    # LIVE LOCATION
+    # ========================================================
+
+    display_live_location()
 
     st.write("")
 
@@ -1593,7 +1803,6 @@ else:
 
         st.stop()
 
-
     # ========================================================
     # IMAGE SECTION
     # ========================================================
@@ -1611,6 +1820,10 @@ else:
         3,
         gap="medium"
     )
+
+    # ========================================================
+    # IMAGE UPLOAD
+    # ========================================================
 
     with image_upload_col:
 
@@ -1636,6 +1849,10 @@ else:
                 ],
                 key="image_upload"
             )
+
+    # ========================================================
+    # IMAGE INPUT
+    # ========================================================
 
     with image_input_col:
 
@@ -1670,6 +1887,10 @@ else:
                 st.info(
                     "Upload an image to start prediction."
                 )
+
+    # ========================================================
+    # IMAGE OUTPUT
+    # ========================================================
 
     with image_output_col:
 
@@ -1726,7 +1947,6 @@ else:
                     "Prediction output will appear here."
                 )
 
-
     # ========================================================
     # CAMERA SECTION
     # ========================================================
@@ -1747,6 +1967,10 @@ else:
         gap="medium"
     )
 
+    # ========================================================
+    # CAMERA
+    # ========================================================
+
     with camera_col:
 
         with st.container(
@@ -1766,6 +1990,10 @@ else:
                 "Capture Image",
                 key="camera"
             )
+
+    # ========================================================
+    # CAMERA INPUT
+    # ========================================================
 
     with camera_input_col:
 
@@ -1800,6 +2028,10 @@ else:
                 st.info(
                     "Camera image will appear here."
                 )
+
+    # ========================================================
+    # CAMERA OUTPUT
+    # ========================================================
 
     with camera_output_col:
 
@@ -1856,7 +2088,6 @@ else:
                     "Camera prediction will appear here."
                 )
 
-
     # ========================================================
     # VIDEO / CCTV SECTION
     # ========================================================
@@ -1877,6 +2108,10 @@ else:
         3,
         gap="medium"
     )
+
+    # ========================================================
+    # VIDEO UPLOAD
+    # ========================================================
 
     with video_upload_col:
 
@@ -1905,6 +2140,10 @@ else:
                 key="video_upload"
             )
 
+    # ========================================================
+    # VIDEO INPUT
+    # ========================================================
+
     with video_input_col:
 
         with st.container(
@@ -1931,6 +2170,10 @@ else:
                 st.info(
                     "Upload a CCTV/video file."
                 )
+
+    # ========================================================
+    # VIDEO OUTPUT
+    # ========================================================
 
     with video_output_col:
 
@@ -2007,6 +2250,10 @@ else:
                                 temp_video.name
                             )
 
+                # =================================================
+                # DISPLAY VIDEO RESULT
+                # =================================================
+
                 if st.session_state.video_result is not None:
 
                     (
@@ -2041,6 +2288,10 @@ else:
                             "❌ Output video could not be generated."
                         )
 
+                    # =================================================
+                    # VIDEO OVERFLOW
+                    # =================================================
+
                     if video_status == "GARBAGE OVERFLOW":
 
                         st.markdown(
@@ -2049,13 +2300,13 @@ else:
 
 <h3>🚨 Garbage Overflow Detected</h3>
 
-<b>Detection:</b> overclass<br><br>
+<b>Detection:</b> Overflow<br><br>
 
 <b>Confidence:</b>
 {video_conf * 100:.2f}%<br><br>
 
-<b>📍 Location:</b>
-{get_location()}<br><br>
+<b>📍 Location:</b><br>
+{get_location().replace(chr(10), "<br>")}<br><br>
 
 <b>🕒 Date & Time:</b>
 {get_current_time()}<br><br>
@@ -2068,9 +2319,11 @@ Violation Detected
                             unsafe_allow_html=True
                         )
 
-                        display_live_location()
-
                         generate_alert()
+
+                    # =================================================
+                    # VIDEO NORMAL
+                    # =================================================
 
                     elif video_status == "NORMAL":
 
@@ -2087,6 +2340,10 @@ Normal
 """,
                             unsafe_allow_html=True
                         )
+
+                    # =================================================
+                    # NO CLEAR
+                    # =================================================
 
                     else:
 
