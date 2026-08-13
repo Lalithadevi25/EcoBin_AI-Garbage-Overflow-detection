@@ -13,7 +13,6 @@ import requests
 from email.message import EmailMessage
 from datetime import datetime
 from zoneinfo import ZoneInfo
-
 from streamlit_geolocation import streamlit_geolocation
 
 
@@ -33,507 +32,482 @@ st.set_page_config(
 # SESSION STATE
 # ============================================================
 
-if "page" not in st.session_state:
-    st.session_state.page = "home"
+defaults = {
+    "page": "home",
+    "last_alert_time": None,
+    "image_result": None,
+    "camera_result": None,
+    "video_result": None,
+    "live_latitude": None,
+    "live_longitude": None,
+    "live_accuracy": None,
+    "live_area": None,
+    "location_loaded": False,
+}
 
-if "last_alert_time" not in st.session_state:
-    st.session_state.last_alert_time = None
-
-if "image_result" not in st.session_state:
-    st.session_state.image_result = None
-
-if "camera_result" not in st.session_state:
-    st.session_state.camera_result = None
-
-if "video_result" not in st.session_state:
-    st.session_state.video_result = None
-
-if "live_latitude" not in st.session_state:
-    st.session_state.live_latitude = None
-
-if "live_longitude" not in st.session_state:
-    st.session_state.live_longitude = None
-
-if "live_accuracy" not in st.session_state:
-    st.session_state.live_accuracy = None
-
-if "live_area" not in st.session_state:
-    st.session_state.live_area = None
-
-if "location_loaded" not in st.session_state:
-    st.session_state.location_loaded = False
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
 
 # ============================================================
-# GLOBAL CSS
+# PREMIUM UI
 # ============================================================
 
 st.markdown(
     """
 <style>
+:root {
+    --navy: #173b6c;
+    --navy2: #0f2f59;
+    --blue: #2f80ed;
+    --green: #16a34a;
+    --green2: #22c55e;
+    --purple: #6d4aff;
+    --text: #24344d;
+    --muted: #64748b;
+    --line: #dbe5f0;
+    --bg: #f5f8fc;
+    --white: #ffffff;
+    --danger: #dc2626;
+}
 
 .stApp {
     background:
-        radial-gradient(circle at top right,
-        rgba(220,252,231,0.55),
-        transparent 30%),
-        radial-gradient(circle at bottom left,
-        rgba(219,234,254,0.55),
-        transparent 30%),
-        #f4f7fb;
+        radial-gradient(circle at 8% 5%, rgba(47,128,237,.08), transparent 25%),
+        radial-gradient(circle at 92% 8%, rgba(34,197,94,.07), transparent 25%),
+        #f5f8fc;
 }
-
-/* Main width */
 
 .block-container {
-    max-width: 1400px;
-    padding-top: 25px;
-    padding-bottom: 35px;
-    padding-left: 7%;
-    padding-right: 7%;
+    max-width: 1280px;
+    padding: 28px 5% 35px 5%;
 }
 
-#MainMenu {
+#MainMenu, footer, header {
     visibility: hidden;
 }
 
-header {
-    visibility: hidden;
+.stMarkdown, .stMarkdown p, .stMarkdown li {
+    color: var(--text);
 }
 
-footer {
-    visibility: hidden;
-}
-
-
-/* =========================================================
-   HOME PAGE
-   ========================================================= */
-
-.main-title,
-.detect-title {
-    color: #17345f !important;
-    font-size: 32px !important;
-    font-weight: 800 !important;
+.hero-title {
     text-align: center;
+    color: var(--navy);
+    font-size: 31px;
+    font-weight: 900;
+    letter-spacing: -.5px;
+    margin: 0;
 }
 
-.main-title {
-    margin-bottom: 32px;
-}
-
-.detect-title {
-    margin-bottom: 5px;
-}
-
-.detect-subtitle {
-    color: #64748b !important;
+.hero-subtitle {
     text-align: center;
-    font-size: 15px;
-    margin-bottom: 25px;
+    color: var(--muted);
+    font-size: 13px;
+    margin: 5px 0 24px 0;
 }
 
-.aicw-text {
-    color: #17345f !important;
-    font-size: 25px !important;
-    font-weight: 800 !important;
-    line-height: 1.55;
+.hero-card {
+    min-height: 300px;
+    background: rgba(255,255,255,.96);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 10px 30px rgba(23,59,108,.08);
+    position: relative;
+    overflow: hidden;
 }
 
-.capstone-text {
-    color: #334155 !important;
-    font-size: 22px !important;
-    font-weight: 700 !important;
-    margin-top: 42px;
+.hero-card:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, #16a34a, #2f80ed, #6d4aff);
 }
 
-.description-title {
-    color: #17345f !important;
-    font-size: 24px !important;
-    font-weight: 800 !important;
-    margin-bottom: 12px;
+.hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
 }
 
-.description-box {
-    background: #ffffff;
-    border: 1px solid #dfe4ec;
-    border-radius: 14px;
-    padding: 22px;
-    color: #374151 !important;
-    font-size: 15px;
-    line-height: 1.7;
-}
-
-.stMarkdown,
-.stMarkdown p,
-.stMarkdown li {
-    color: #374151;
-}
-
-.card-heading {
-    color: #26364d !important;
-    font-size: 15px !important;
-    font-weight: 800 !important;
+.program-pill {
+    display: inline-block;
+    width: fit-content;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: #eef5ff;
+    color: var(--navy);
+    border: 1px solid #cfe0fa;
+    font-size: 11px;
+    font-weight: 800;
     margin-bottom: 16px;
 }
 
-.card-text {
-    color: #4b5563 !important;
-    font-size: 14px !important;
-    line-height: 2.2 !important;
+.hero-career {
+    color: var(--navy);
+    font-size: 27px;
+    font-weight: 900;
+    line-height: 1.18;
+    margin: 0 0 8px 0;
 }
 
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-
-div.stButton > button {
-    width: 100%;
-    min-height: 45px;
-    background: #ffffff !important;
-    color: #17345f !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 9px !important;
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    transition: 0.2s ease;
+.hero-capstone {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 20px;
 }
 
-div.stButton > button:hover {
-    border-color: #17345f !important;
-    color: #17345f !important;
-    background: #eef4ff !important;
-    transform: translateY(-1px);
+.hero-project-name {
+    color: var(--green);
+    font-size: 15px;
+    font-weight: 800;
+    margin-top: 10px;
 }
 
-
-/* Detect buttons */
-
-.detect-button button {
-    background: #173f73 !important;
-    color: white !important;
-    border: none !important;
-    min-height: 48px !important;
-    font-size: 15px !important;
-    font-weight: 800 !important;
-    border-radius: 10px !important;
-    box-shadow: 0 5px 15px rgba(23,63,115,0.20);
+.hero-logo {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin-top: 4px;
 }
 
-.detect-button button:hover {
-    background: #0f315d !important;
-    color: white !important;
+.hero-logo img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    border-radius: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
 }
 
-
-/* =========================================================
-   PREDICTION PAGE SECTION TITLES
-   ========================================================= */
+.hero-logo-text {
+    color: var(--navy);
+    font-weight: 900;
+    font-size: 18px;
+}
 
 .section-title {
-    color: #173f73 !important;
-    font-size: 22px !important;
-    font-weight: 850 !important;
-    margin-top: 25px;
-    margin-bottom: 15px;
+    color: var(--navy);
+    font-size: 19px;
+    font-weight: 900;
+    margin: 28px 0 12px 0;
 }
 
-.section-subtitle {
-    color: #64748b !important;
-    font-size: 13px !important;
-    margin-bottom: 15px;
+.description-card {
+    min-height: 300px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 25px 27px;
+    box-shadow: 0 10px 30px rgba(23,59,108,.07);
 }
 
+.description-heading {
+    color: var(--navy);
+    font-size: 18px;
+    font-weight: 900;
+    margin-bottom: 13px;
+}
 
-/* =========================================================
-   MODERN CARDS
-   ========================================================= */
+.description-card p {
+    color: #52627a;
+    font-size: 13px;
+    line-height: 1.75;
+    margin: 0 0 14px 0;
+}
 
-.ui-card {
-    background: rgba(255,255,255,0.96);
-    border: 1px solid #d8e2ef;
+.capability-card {
+    background: #fff;
+    border: 1px solid var(--line);
     border-radius: 16px;
-    padding: 18px;
-    box-shadow: 0 5px 18px rgba(15,23,42,0.07);
+    padding: 18px 14px;
+    min-height: 115px;
+    text-align: center;
+    box-shadow: 0 7px 20px rgba(23,59,108,.06);
+}
+
+.capability-icon {
+    font-size: 21px;
+    margin-bottom: 5px;
+}
+
+.capability-title {
+    color: var(--navy);
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.capability-text {
+    color: var(--muted);
+    font-size: 10.5px;
+    line-height: 1.45;
+    margin-top: 5px;
+}
+
+.team-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    padding: 19px;
+    min-height: 150px;
+    box-shadow: 0 7px 20px rgba(23,59,108,.05);
+}
+
+.team-heading {
+    color: var(--navy);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .3px;
     margin-bottom: 10px;
 }
 
-.ui-card-title {
-    color: #173f73 !important;
-    font-size: 16px !important;
-    font-weight: 850 !important;
+.team-text {
+    color: #52627a;
+    font-size: 11px;
+    line-height: 1.9;
+}
+
+.team-text a {
+    color: #2f80ed;
+}
+
+.footer-text {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 11px;
+    margin-top: 25px;
+}
+
+.page-header {
+    background: linear-gradient(135deg, #173b6c, #24548d);
+    border-radius: 20px;
+    padding: 22px 25px;
+    color: white;
+    margin-bottom: 18px;
+    box-shadow: 0 12px 28px rgba(23,59,108,.16);
+}
+
+.page-header-title {
+    font-size: 27px;
+    font-weight: 900;
+    margin: 0;
+}
+
+.page-header-sub {
+    color: #dbeafe;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.location-card {
+    background: linear-gradient(135deg, #eff8ff, #f0fdf4);
+    border: 1px solid #b9d9f7;
+    border-radius: 16px;
+    padding: 15px 18px;
+    margin: 8px 0 20px 0;
+}
+
+.location-heading {
+    color: var(--navy);
+    font-size: 15px;
+    font-weight: 900;
+    margin-bottom: 9px;
+}
+
+.location-line {
+    color: #475569;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.mode-title {
+    color: var(--navy);
+    font-size: 18px;
+    font-weight: 900;
+    margin: 20px 0 11px 0;
+}
+
+.io-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 17px;
+    padding: 17px;
+    min-height: 250px;
+    box-shadow: 0 8px 22px rgba(23,59,108,.06);
+}
+
+.io-card-title {
+    color: var(--navy);
+    font-size: 14px;
+    font-weight: 900;
     margin-bottom: 10px;
 }
 
 .empty-message {
-    min-height: 190px;
+    min-height: 175px;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     text-align: center;
-    border: 2px dashed #d5deeb;
-    border-radius: 12px;
+    color: #94a3b8;
     background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 18px;
+    font-size: 12px;
+}
+
+.result-panel {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
     padding: 20px;
+    margin-top: 14px;
+    box-shadow: 0 8px 24px rgba(23,59,108,.06);
 }
 
-.empty-icon {
-    font-size: 36px;
-    margin-bottom: 10px;
-}
-
-.empty-title {
-    color: #334155 !important;
-    font-size: 15px !important;
-    font-weight: 800 !important;
-}
-
-.empty-text {
-    color: #64748b !important;
-    font-size: 13px !important;
-    line-height: 1.6 !important;
-    margin-top: 5px;
-}
-
-
-/* =========================================================
-   RESULT STATUS
-   ========================================================= */
-
-.completed-box {
-    background: #ecfdf5;
-    border: 2px solid #22c55e;
-    border-radius: 11px;
-    padding: 12px 15px;
-    margin-top: 12px;
+.result-title {
+    color: var(--navy);
+    font-size: 17px;
+    font-weight: 900;
     margin-bottom: 12px;
-    color: #166534 !important;
 }
 
-.completed-title {
-    color: #166534 !important;
-    font-size: 15px !important;
-    font-weight: 900 !important;
-}
-
-.completed-text {
-    color: #15803d !important;
-    font-size: 12px !important;
-    margin-top: 3px;
-}
-
-
-/* Overflow */
-
-.alert-box {
+.status-overflow {
     background: #fff1f2;
-    border: 2px solid #ef4444;
-    border-radius: 12px;
-    padding: 15px;
-    margin-top: 10px;
-    color: #991b1b !important;
+    border: 2px solid #f87171;
+    border-radius: 15px;
+    padding: 17px;
+    color: #991b1b;
 }
 
-.alert-box h3 {
-    color: #991b1b !important;
-    margin-top: 0;
-}
-
-
-/* Normal */
-
-.normal-box {
+.status-normal {
     background: #f0fdf4;
-    border: 2px solid #22c55e;
-    border-radius: 12px;
-    padding: 15px;
-    margin-top: 10px;
-    color: #166534 !important;
+    border: 2px solid #4ade80;
+    border-radius: 15px;
+    padding: 17px;
+    color: #166534;
 }
 
-.normal-box h3 {
-    color: #166534 !important;
-    margin-top: 0;
+.status-title {
+    font-size: 18px;
+    font-weight: 900;
+    margin-bottom: 8px;
 }
-
-
-/* =========================================================
-   DETECTION DETAILS
-   ========================================================= */
 
 .details-card {
     background: #f8fafc;
-    border: 1px solid #dbe4ef;
-    border-radius: 11px;
-    padding: 13px;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    padding: 14px 16px;
     margin-top: 12px;
 }
 
 .details-title {
-    color: #173f73 !important;
-    font-size: 14px !important;
-    font-weight: 850 !important;
-    margin-bottom: 8px;
+    color: var(--navy);
+    font-size: 13px;
+    font-weight: 900;
+    margin-bottom: 7px;
 }
 
 .detail-row {
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 7px;
-    padding: 8px 10px;
-    margin-bottom: 6px;
-    color: #475569 !important;
-    font-size: 12px !important;
+    color: #475569;
+    font-size: 12px;
+    padding: 5px 0;
+    border-bottom: 1px solid #e8edf3;
 }
 
-
-/* =========================================================
-   LOCATION
-   ========================================================= */
-
-.location-box {
-    background: #eff6ff;
-    border: 2px solid #93c5fd;
-    border-radius: 14px;
-    padding: 17px;
-    margin-top: 10px;
-    margin-bottom: 15px;
-    color: #1e3a8a !important;
-    box-shadow: 0 3px 12px rgba(59,130,246,0.06);
+.detail-row:last-child {
+    border-bottom: none;
 }
-
-.location-title {
-    color: #17345f !important;
-    font-size: 18px !important;
-    font-weight: 850 !important;
-    margin-bottom: 10px;
-}
-
-
-/* =========================================================
-   EMAIL
-   ========================================================= */
 
 .email-success {
-    background: #dcfce7 !important;
-    border: 2px solid #15803d !important;
-    border-radius: 12px !important;
-    padding: 15px !important;
-    margin-top: 12px !important;
-    margin-bottom: 10px !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    text-align: center !important;
+    background: #dcfce7;
+    border: 2px solid #22c55e;
+    border-radius: 13px;
+    padding: 14px;
+    text-align: center;
+    margin-top: 12px;
 }
 
 .email-success-title {
-    color: #14532d !important;
-    font-size: 17px !important;
-    font-weight: 900 !important;
-    margin: 0 0 5px 0 !important;
+    color: #14532d;
+    font-size: 15px;
+    font-weight: 900;
 }
 
 .email-success-text {
-    color: #166534 !important;
-    font-size: 13px !important;
-    font-weight: 700 !important;
-    margin: 0 !important;
+    color: #166534;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 4px;
 }
 
-.email-error {
-    background: #fef2f2 !important;
-    border: 2px solid #dc2626 !important;
-    border-radius: 12px !important;
-    padding: 15px !important;
-    margin-top: 12px !important;
-    color: #991b1b !important;
-    font-weight: 700 !important;
+.alert-box {
+    background: #fff1f2;
+    border: 2px solid #ef4444;
+    border-radius: 14px;
+    padding: 16px;
+    color: #991b1b;
 }
 
-
-/* =========================================================
-   FILE UPLOADER
-   ========================================================= */
-
-[data-testid="stFileUploader"] {
-    margin-top: 10px;
+.normal-box {
+    background: #f0fdf4;
+    border: 2px solid #22c55e;
+    border-radius: 14px;
+    padding: 16px;
+    color: #166534;
 }
 
-[data-testid="stFileUploader"] section {
+div.stButton > button {
+    width: 100%;
     border-radius: 10px !important;
-    border: 1px dashed #94a3b8 !important;
-    background: #f8fafc !important;
+    min-height: 42px;
+    font-weight: 800 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: var(--navy) !important;
+    background: #fff !important;
+    transition: .2s;
 }
 
-
-/* =========================================================
-   CAMERA
-   ========================================================= */
-
-[data-testid="stCameraInput"] {
-    border-radius: 12px !important;
-    overflow: hidden !important;
+div.stButton > button:hover {
+    border-color: var(--blue) !important;
+    color: var(--blue) !important;
+    box-shadow: 0 5px 15px rgba(47,128,237,.12);
 }
 
-
-/* =========================================================
-   VIDEO
-   ========================================================= */
-
-video {
-    border-radius: 12px !important;
+.primary-btn div.stButton > button {
+    background: linear-gradient(135deg, #173b6c, #24548d) !important;
+    color: white !important;
+    border: none !important;
 }
 
-
-/* =========================================================
-   FOOTER
-   ========================================================= */
-
-.footer-text {
-    text-align: center;
-    color: #64748b;
-    margin-top: 35px;
-    font-size: 13px;
+div[data-testid="stFileUploader"] {
+    color: var(--text);
 }
 
-.logo-container {
-    text-align: center;
-    margin-bottom: 10px;
+div[data-testid="stFileUploaderDropzone"] {
+    background: #f8fafc;
+    border: 1px dashed #bfd0e4;
+    border-radius: 12px;
 }
 
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media(max-width: 900px) {
-
-    .block-container {
-        padding-left: 5%;
-        padding-right: 5%;
-    }
-
-    .main-title,
-    .detect-title {
-        font-size: 24px !important;
-    }
-
-    .aicw-text {
-        font-size: 21px !important;
-    }
-
-    .capstone-text {
-        font-size: 19px !important;
-    }
-
-    .empty-message {
-        min-height: 130px;
-    }
-
+.stProgress > div > div > div > div {
+    background: var(--blue);
 }
 
+@media (max-width: 900px) {
+    .hero-title { font-size: 25px; }
+    .hero-card, .description-card { min-height: auto; }
+    .hero-career { font-size: 23px; }
+}
 </style>
 """,
     unsafe_allow_html=True
@@ -541,91 +515,45 @@ video {
 
 
 # ============================================================
-# LOGO
+# HELPERS
 # ============================================================
 
-def show_logo(width=110):
-
-    logo_path = os.path.join(
-        os.path.dirname(__file__),
-        "logo.png"
-    )
-
+def show_logo(width=72):
+    logo_path = os.path.join(os.path.dirname(__file__), "logo.png")
     if os.path.exists(logo_path):
+        st.image(logo_path, width=width)
 
-        st.markdown(
-            '<div class="logo-container">',
-            unsafe_allow_html=True
-        )
-
-        st.image(
-            logo_path,
-            width=width
-        )
-
-        st.markdown(
-            '</div>',
-            unsafe_allow_html=True
-        )
-
-
-# ============================================================
-# LOAD MODEL
-# ============================================================
 
 @st.cache_resource
 def load_model():
-
-    model_path = os.path.join(
-        os.path.dirname(__file__),
-        "best.pt"
-    )
-
+    model_path = os.path.join(os.path.dirname(__file__), "best.pt")
     if not os.path.exists(model_path):
-
         raise FileNotFoundError(
             "best.pt file not found in the same folder as app.py"
         )
-
     return YOLO(model_path)
 
 
-# ============================================================
-# REVERSE GEOCODING
-# ============================================================
-
 @st.cache_data(ttl=300)
 def reverse_geocode(latitude, longitude):
-
     try:
-
-        url = "https://nominatim.openstreetmap.org/reverse"
-
-        params = {
-            "lat": latitude,
-            "lon": longitude,
-            "format": "jsonv2",
-            "addressdetails": 1,
-            "zoom": 18,
-            "accept-language": "en"
-        }
-
-        headers = {
-            "User-Agent":
-                "EcoBin-AI-Garbage-Overflow-Detection/1.0"
-        }
-
         response = requests.get(
-            url,
-            params=params,
-            headers=headers,
-            timeout=10
+            "https://nominatim.openstreetmap.org/reverse",
+            params={
+                "lat": latitude,
+                "lon": longitude,
+                "format": "jsonv2",
+                "addressdetails": 1,
+                "zoom": 18,
+                "accept-language": "en",
+            },
+            headers={
+                "User-Agent": "EcoBin-AI-Garbage-Overflow-Detection/1.0"
+            },
+            timeout=10,
         )
-
         response.raise_for_status()
-
         data = response.json()
-
         address = data.get("address", {})
 
         area = (
@@ -636,52 +564,33 @@ def reverse_geocode(latitude, longitude):
             or address.get("city")
             or address.get("municipality")
         )
-
         city = (
             address.get("city")
             or address.get("town")
             or address.get("village")
             or address.get("municipality")
         )
-
         state = address.get("state", "")
         postcode = address.get("postcode", "")
 
         parts = []
-
         if area:
             parts.append(area)
-
         if city and city != area:
             parts.append(city)
-
         if state:
             parts.append(state)
-
         if postcode:
             parts.append(postcode)
 
-        if parts:
-            return ", ".join(parts)
-
-        display_name = data.get("display_name")
-
-        if display_name:
-            return display_name
-
-        return "Area name unavailable"
-
+        return ", ".join(parts) if parts else data.get(
+            "display_name", "Area name unavailable"
+        )
     except Exception:
-
         return "Area name unavailable"
 
-
-# ============================================================
-# GET LIVE LOCATION
-# ============================================================
 
 def get_live_location():
-
     location = streamlit_geolocation()
 
     if not location:
@@ -695,39 +604,24 @@ def get_live_location():
         return
 
     try:
-
         latitude = float(latitude)
         longitude = float(longitude)
 
         st.session_state.live_latitude = latitude
         st.session_state.live_longitude = longitude
         st.session_state.live_accuracy = accuracy
-
-        area = reverse_geocode(
-            latitude,
-            longitude
-        )
-
-        st.session_state.live_area = area
+        st.session_state.live_area = reverse_geocode(latitude, longitude)
         st.session_state.location_loaded = True
-
     except Exception:
-
         st.session_state.location_loaded = False
 
 
-# ============================================================
-# LOCATION TEXT
-# ============================================================
-
 def get_location():
-
     area = st.session_state.live_area
     latitude = st.session_state.live_latitude
     longitude = st.session_state.live_longitude
 
     if area and latitude is not None and longitude is not None:
-
         return (
             f"{area}\n"
             f"Latitude: {latitude:.6f}\n"
@@ -737,12 +631,7 @@ def get_location():
     return "Live location not available"
 
 
-# ============================================================
-# MAP URL
-# ============================================================
-
 def get_map_url():
-
     latitude = st.session_state.live_latitude
     longitude = st.session_state.live_longitude
 
@@ -755,119 +644,73 @@ def get_map_url():
     )
 
 
-# ============================================================
-# CURRENT TIME
-# ============================================================
-
 def get_current_time():
-
-    india_time = datetime.now(
+    return datetime.now(
         ZoneInfo("Asia/Kolkata")
-    )
+    ).strftime("%d-%b-%Y %I:%M:%S %p")
 
-    return india_time.strftime(
-        "%d-%b-%Y %I:%M:%S %p"
-    )
-
-
-# ============================================================
-# LOCATION DISPLAY
-# ============================================================
 
 def display_live_location():
-
     st.markdown(
-        """
-<div class="location-title">
-    📍 Live Location
-</div>
-""",
+        '<div class="location-card">'
+        '<div class="location-heading">📍 Live Location</div>',
         unsafe_allow_html=True
     )
 
     get_live_location()
 
     if st.session_state.location_loaded:
-
         area = st.session_state.live_area
         latitude = st.session_state.live_latitude
         longitude = st.session_state.live_longitude
         accuracy = st.session_state.live_accuracy
 
-        accuracy_text = ""
-
+        accuracy_text = "Available"
         if accuracy is not None:
-
             try:
-
-                accuracy_text = (
-                    f"{float(accuracy):.1f} meters"
-                )
-
+                accuracy_text = f"{float(accuracy):.1f} meters"
             except Exception:
-
                 accuracy_text = str(accuracy)
 
         st.markdown(
             f"""
-<div class="location-box">
-
-<b>📍 Current Area:</b>
-{area}<br><br>
-
-<b>Latitude:</b>
-{latitude:.6f}<br>
-
-<b>Longitude:</b>
-{longitude:.6f}<br>
-
-<b>GPS Accuracy:</b>
-{accuracy_text if accuracy_text else "Available"}<br><br>
-
-<b>🕒 Location Time:</b>
-{get_current_time()}
-
+<div class="location-line">
+<b>Current Area:</b> {area}<br>
+<b>Latitude:</b> {latitude:.6f} &nbsp;&nbsp;
+<b>Longitude:</b> {longitude:.6f}<br>
+<b>GPS Accuracy:</b> {accuracy_text}<br>
+<b>Location Time:</b> {get_current_time()}
 </div>
 """,
             unsafe_allow_html=True
         )
 
         map_url = get_map_url()
-
         if map_url:
-
             st.link_button(
                 "🗺️ Open Live Location in Google Maps",
                 map_url,
                 use_container_width=True
             )
-
     else:
-
-        st.info(
-            "📍 Click the location button and allow "
-            "location permission in your browser."
+        st.markdown(
+            '<div class="location-line">'
+            '📍 Allow browser location permission to load your live area.'
+            '</div>',
+            unsafe_allow_html=True
         )
 
+    st.markdown("</div>", unsafe_allow_html=True)
 
-# ============================================================
-# EMAIL ALERT
-# ============================================================
 
 def send_email_alert():
-
     try:
-
         sender_email = st.secrets["EMAIL_SENDER"]
         sender_password = st.secrets["EMAIL_PASSWORD"]
         receiver_email = st.secrets["EMAIL_RECEIVER"]
 
         message = EmailMessage()
-
-        message["Subject"] = (
-            "EcoBin AI - Garbage Overflow Alert"
-        )
-
+        message["Subject"] = "EcoBin AI - Garbage Overflow Alert"
         message["From"] = sender_email
         message["To"] = receiver_email
 
@@ -896,136 +739,68 @@ This alert was automatically generated by EcoBin AI.
 """
         )
 
-        with smtplib.SMTP(
-            "smtp.gmail.com",
-            587
-        ) as server:
-
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
-
-            server.login(
-                sender_email,
-                sender_password
-            )
-
+            server.login(sender_email, sender_password)
             server.send_message(message)
 
         return True
 
     except Exception as e:
-
-        st.markdown(
-            f"""
-<div class="email-error">
-❌ Email alert failed: {str(e)}
-</div>
-""",
-            unsafe_allow_html=True
-        )
-
+        st.error(f"❌ Email alert failed: {e}")
         return False
 
 
-# ============================================================
-# GENERATE ALERT
-# ============================================================
-
 def generate_alert():
-
-    current_dt = datetime.now(
-        ZoneInfo("Asia/Kolkata")
-    )
-
+    current_dt = datetime.now(ZoneInfo("Asia/Kolkata"))
     previous = st.session_state.last_alert_time
 
     if previous is not None:
-
-        difference = (
-            current_dt - previous
-        ).total_seconds()
-
+        difference = (current_dt - previous).total_seconds()
         if difference < 300:
             return
 
-    email_sent = send_email_alert()
-
-    if email_sent:
-
+    if send_email_alert():
         st.session_state.last_alert_time = current_dt
-
         st.markdown(
             """
 <div class="email-success">
-
-<div class="email-success-title">
-📧 ALERT EMAIL SENT SUCCESSFULLY
-</div>
-
+<div class="email-success-title">📧 ALERT EMAIL SENT SUCCESSFULLY</div>
 <div class="email-success-text">
-The garbage overflow alert has been successfully
-sent to the configured email address.
+The garbage overflow alert was sent to the configured email address.
 </div>
-
 </div>
 """,
             unsafe_allow_html=True
         )
 
 
-# ============================================================
-# NORMALIZE CLASS
-# ============================================================
-
 def normalize_class_name(name):
+    return str(name).lower().strip().replace("_", " ").replace("-", " ")
 
-    name = str(name).lower().strip()
-
-    name = name.replace("_", " ")
-    name = name.replace("-", " ")
-
-    return name
-
-
-# ============================================================
-# EXTRACT DETECTIONS
-# ============================================================
 
 def extract_detections(result):
-
     detections = []
 
     if result.boxes is None:
         return detections
 
     for box in result.boxes:
-
         class_id = int(box.cls[0])
         confidence = float(box.conf[0])
+        class_name = normalize_class_name(result.names[class_id])
 
-        class_name = normalize_class_name(
-            result.names[class_id]
-        )
-
-        detections.append(
-            {
-                "class": class_name,
-                "confidence": confidence
-            }
-        )
+        detections.append({
+            "class": class_name,
+            "confidence": confidence
+        })
 
     return detections
 
 
-# ============================================================
-# FINAL PREDICTION
-# ============================================================
-
 def get_final_prediction(detections):
-
     overflow_detections = [
-
         d for d in detections
-
         if d["class"] in [
             "overflow",
             "overclass",
@@ -1033,358 +808,165 @@ def get_final_prediction(detections):
             "overflowing",
             "overflowed"
         ]
-
         and d["confidence"] >= 0.30
-
     ]
 
     normal_detections = [
-
         d for d in detections
-
         if d["class"] in [
             "normal",
             "normal bin",
             "non overflow",
             "non-overflow"
         ]
-
     ]
 
     if overflow_detections:
-
         best = max(
             overflow_detections,
             key=lambda x: x["confidence"]
         )
-
-        return (
-            "GARBAGE OVERFLOW",
-            best["confidence"]
-        )
+        return "GARBAGE OVERFLOW", best["confidence"]
 
     if normal_detections:
-
         best = max(
             normal_detections,
             key=lambda x: x["confidence"]
         )
+        return "NORMAL", best["confidence"]
 
-        return (
-            "NORMAL",
-            best["confidence"]
-        )
+    return "NO CLEAR DETECTION", 0.0
 
-    return (
-        "NO CLEAR DETECTION",
-        0.0
-    )
-
-
-# ============================================================
-# PREDICT IMAGE
-# ============================================================
 
 def predict_image(image, model):
-
     image_np = np.array(image)
-
     results = model.predict(
         source=image_np,
         conf=0.20,
         verbose=False
     )
-
     result = results[0]
-
     detections = extract_detections(result)
-
     return result, detections
 
 
-# ============================================================
-# EMPTY CARD
-# ============================================================
-
-def show_empty_card(
-    icon,
-    title,
-    message
-):
-
+def show_prediction_result(result, detections, title="Prediction Result"):
     st.markdown(
         f"""
-<div class="empty-message">
-
-<div class="empty-icon">
-    {icon}
-</div>
-
-<div class="empty-title">
-    {title}
-</div>
-
-<div class="empty-text">
-    {message}
-</div>
-
-</div>
+<div class="result-panel">
+<div class="result-title">🎯 {title}</div>
 """,
         unsafe_allow_html=True
     )
 
+    annotated = result.plot()
+    st.image(annotated, use_container_width=True)
 
-# ============================================================
-# PREDICTION OUTPUT - INSIDE OUTPUT CARD
-# ============================================================
-
-def display_prediction_inside_card(
-    result,
-    detections,
-    title="Prediction Result"
-):
-
-    status, confidence = get_final_prediction(
-        detections
-    )
-
-    # --------------------------------------------------------
-    # ANNOTATED IMAGE
-    # --------------------------------------------------------
-
-    st.image(
-        result.plot(),
-        use_container_width=True
-    )
-
-    # --------------------------------------------------------
-    # PREDICTION COMPLETED
-    # --------------------------------------------------------
-
-    st.markdown(
-        """
-<div class="completed-box">
-
-<div class="completed-title">
-    ✅ Prediction Completed
-</div>
-
-<div class="completed-text">
-    AI analysis has been completed successfully.
-</div>
-
-</div>
-""",
-        unsafe_allow_html=True
-    )
-
-    # --------------------------------------------------------
-    # OVERFLOW
-    # --------------------------------------------------------
+    status, confidence = get_final_prediction(detections)
 
     if status == "GARBAGE OVERFLOW":
-
         st.markdown(
             f"""
-<div class="alert-box">
-
-<h3>🚨 Garbage Overflow Detected</h3>
-
-<b>Detection:</b> Overflow<br><br>
-
-<b>Confidence:</b>
-{confidence * 100:.2f}%<br><br>
-
-<b>📍 Location:</b><br>
-{get_location().replace(chr(10), "<br>")}<br><br>
-
-<b>🕒 Date & Time:</b>
-{get_current_time()}<br><br>
-
-<b>⚠️ Status:</b>
-Violation Detected
-
+<div class="status-overflow">
+<div class="status-title">🚨 Garbage Overflow Detected</div>
+<b>Detection:</b> Overflow<br>
+<b>Confidence:</b> {confidence * 100:.2f}%<br>
+<b>Location:</b> {get_location().replace(chr(10), " | ")}<br>
+<b>Date & Time:</b> {get_current_time()}<br>
+<b>Status:</b> Violation Detected
 </div>
 """,
             unsafe_allow_html=True
         )
-
         generate_alert()
 
-    # --------------------------------------------------------
-    # NORMAL
-    # --------------------------------------------------------
-
     elif status == "NORMAL":
-
         st.markdown(
             f"""
-<div class="normal-box">
-
-<h3>✅ No Garbage Overflow Detected</h3>
-
-<b>Detection:</b> Normal<br><br>
-
-<b>Confidence:</b>
-{confidence * 100:.2f}%<br><br>
-
-<b>📍 Location:</b><br>
-{get_location().replace(chr(10), "<br>")}<br><br>
-
-<b>Status:</b>
-Normal
-
+<div class="status-normal">
+<div class="status-title">✅ No Garbage Overflow Detected</div>
+<b>Detection:</b> Normal<br>
+<b>Confidence:</b> {confidence * 100:.2f}%<br>
+<b>Location:</b> {get_location().replace(chr(10), " | ")}<br>
+<b>Date & Time:</b> {get_current_time()}<br>
+<b>Status:</b> Normal
 </div>
 """,
             unsafe_allow_html=True
         )
 
-    # --------------------------------------------------------
-    # NO CLEAR
-    # --------------------------------------------------------
-
     else:
-
         st.warning(
             "⚠️ No clear garbage condition detected. "
             "Please try another image."
         )
 
-    # --------------------------------------------------------
-    # DETECTION DETAILS
-    # --------------------------------------------------------
-
-    st.markdown(
-        """
-<div class="details-card">
-
-<div class="details-title">
-    🔎 Detection Details
-</div>
-""",
-        unsafe_allow_html=True
-    )
-
     if detections:
+        st.markdown(
+            '<div class="details-card">'
+            '<div class="details-title">📊 Detection Details</div>',
+            unsafe_allow_html=True
+        )
 
         for detection in detections:
-
             st.markdown(
                 f"""
 <div class="detail-row">
-
-<b>Class:</b>
-{detection["class"].title()}
-
-&nbsp;&nbsp; | &nbsp;&nbsp;
-
-<b>Confidence:</b>
-{detection["confidence"] * 100:.2f}%
-
+<b>{detection["class"].title()}</b>
+&nbsp; — &nbsp; {detection["confidence"] * 100:.2f}% confidence
 </div>
 """,
                 unsafe_allow_html=True
             )
 
+        st.markdown("</div></div>", unsafe_allow_html=True)
     else:
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown(
-            """
-<div class="detail-row">
-    No individual detections returned by the model.
-</div>
-""",
-            unsafe_allow_html=True
-        )
-
-    st.markdown(
-        "</div>",
-        unsafe_allow_html=True
-    )
-
-
-# ============================================================
-# VIDEO PROCESSING
-# ============================================================
 
 def process_video(video_path, model):
-
     cap = cv2.VideoCapture(video_path)
 
     if not cap.isOpened():
+        return "NO CLEAR DETECTION", None, 0.0
 
-        return (
-            "NO CLEAR DETECTION",
-            None,
-            0.0
-        )
-
-    fps = cap.get(
-        cv2.CAP_PROP_FPS
-    )
-
+    fps = cap.get(cv2.CAP_PROP_FPS)
     if fps <= 0:
         fps = 25
 
-    width = int(
-        cap.get(
-            cv2.CAP_PROP_FRAME_WIDTH
-        )
-    )
-
-    height = int(
-        cap.get(
-            cv2.CAP_PROP_FRAME_HEIGHT
-        )
-    )
-
-    total_frames = int(
-        cap.get(
-            cv2.CAP_PROP_FRAME_COUNT
-        )
-    )
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     raw_output = tempfile.NamedTemporaryFile(
-        delete=False,
-        suffix=".mp4"
+        delete=False, suffix=".mp4"
     )
-
     raw_output_path = raw_output.name
     raw_output.close()
 
     h264_output = tempfile.NamedTemporaryFile(
-        delete=False,
-        suffix=".mp4"
+        delete=False, suffix=".mp4"
     )
-
     h264_output_path = h264_output.name
     h264_output.close()
 
-    fourcc = cv2.VideoWriter_fourcc(
-        *"mp4v"
-    )
-
     writer = cv2.VideoWriter(
         raw_output_path,
-        fourcc,
+        cv2.VideoWriter_fourcc(*"mp4v"),
         fps,
         (width, height)
     )
 
     frame_number = 0
-
     overflow_count = 0
     normal_count = 0
     detection_count = 0
-
     best_overflow_confidence = 0.0
 
     progress = st.progress(0)
 
     while True:
-
         ret, frame = cap.read()
-
         if not ret:
             break
 
@@ -1395,153 +977,84 @@ def process_video(video_path, model):
         )
 
         result = results[0]
-
-        detections = extract_detections(
-            result
-        )
-
-        status, confidence = get_final_prediction(
-            detections
-        )
+        detections = extract_detections(result)
+        status, confidence = get_final_prediction(detections)
 
         if status == "GARBAGE OVERFLOW":
-
             overflow_count += 1
             detection_count += 1
-
-            if confidence > best_overflow_confidence:
-
-                best_overflow_confidence = confidence
-
+            best_overflow_confidence = max(
+                best_overflow_confidence,
+                confidence
+            )
         elif status == "NORMAL":
-
             normal_count += 1
             detection_count += 1
 
         annotated_frame = result.plot()
 
         if status == "GARBAGE OVERFLOW":
-
-            cv2.rectangle(
-                annotated_frame,
-                (10, 10),
-                (520, 80),
-                (0, 0, 255),
-                -1
-            )
-
-            cv2.putText(
-                annotated_frame,
-                "GARBAGE OVERFLOW DETECTED",
-                (25, 55),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.80,
-                (255, 255, 255),
-                2,
-                cv2.LINE_AA
-            )
-
+            label = "GARBAGE OVERFLOW DETECTED"
         elif status == "NORMAL":
-
-            cv2.rectangle(
-                annotated_frame,
-                (10, 10),
-                (300, 80),
-                (0, 150, 0),
-                -1
-            )
-
-            cv2.putText(
-                annotated_frame,
-                "NORMAL",
-                (25, 55),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.80,
-                (255, 255, 255),
-                2,
-                cv2.LINE_AA
-            )
-
+            label = "NORMAL"
         else:
+            label = "NO CLEAR DETECTION"
 
-            cv2.rectangle(
-                annotated_frame,
-                (10, 10),
-                (370, 80),
-                (80, 80, 80),
-                -1
-            )
+        cv2.rectangle(
+            annotated_frame,
+            (10, 10),
+            (560, 72),
+            (25, 55, 95),
+            -1
+        )
 
-            cv2.putText(
-                annotated_frame,
-                "NO CLEAR DETECTION",
-                (25, 55),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.70,
-                (255, 255, 255),
-                2,
-                cv2.LINE_AA
-            )
+        cv2.putText(
+            annotated_frame,
+            label,
+            (25, 50),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.72,
+            (255, 255, 255),
+            2,
+            cv2.LINE_AA
+        )
 
         if confidence > 0:
-
             cv2.putText(
                 annotated_frame,
                 f"Confidence: {confidence * 100:.2f}%",
-                (15, height - 20),
+                (15, height - 18),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.65,
+                0.62,
                 (255, 255, 255),
                 2,
                 cv2.LINE_AA
             )
 
-        writer.write(
-            annotated_frame
-        )
-
+        writer.write(annotated_frame)
         frame_number += 1
 
         if total_frames > 0:
-
             progress.progress(
-                min(
-                    frame_number / total_frames,
-                    1.0
-                )
+                min(frame_number / total_frames, 1.0)
             )
 
     cap.release()
     writer.release()
-
     progress.empty()
 
     try:
-
         ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
 
         command = [
-
             ffmpeg_path,
             "-y",
-            "-i",
-            raw_output_path,
-
-            "-c:v",
-            "libx264",
-
-            "-preset",
-            "fast",
-
-            "-crf",
-            "23",
-
-            "-pix_fmt",
-            "yuv420p",
-
-            "-movflags",
-            "+faststart",
-
+            "-i", raw_output_path,
+            "-c:v", "libx264",
+            "-preset", "fast",
+            "-crf", "23",
+            "-pix_fmt", "yuv420p",
+            "-movflags", "+faststart",
             h264_output_path
         ]
 
@@ -1555,53 +1068,49 @@ def process_video(video_path, model):
         final_video_path = h264_output_path
 
     except Exception:
-
         final_video_path = raw_output_path
 
     try:
-
-        with open(
-            final_video_path,
-            "rb"
-        ) as video_file:
-
+        with open(final_video_path, "rb") as video_file:
             output_video_bytes = video_file.read()
-
     except Exception:
-
         output_video_bytes = None
 
-    try:
-
-        if os.path.exists(raw_output_path):
-            os.remove(raw_output_path)
-
-        if os.path.exists(h264_output_path):
-            os.remove(h264_output_path)
-
-    except Exception:
-        pass
+    for path in [raw_output_path, h264_output_path]:
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+        except Exception:
+            pass
 
     if detection_count == 0:
-
-        return (
-            "NO CLEAR DETECTION",
-            output_video_bytes,
-            0.0
-        )
+        return "NO CLEAR DETECTION", output_video_bytes, 0.0
 
     if overflow_count > 0:
-
         return (
             "GARBAGE OVERFLOW",
             output_video_bytes,
             best_overflow_confidence
         )
 
-    return (
-        "NORMAL",
-        output_video_bytes,
-        0.0
+    return "NORMAL", output_video_bytes, 0.0
+
+
+# ============================================================
+# REUSABLE UI CARDS
+# ============================================================
+
+def empty_box(message):
+    st.markdown(
+        f'<div class="empty-message">{message}</div>',
+        unsafe_allow_html=True
+    )
+
+
+def section_title(icon, title):
+    st.markdown(
+        f'<div class="mode-title">{icon} {title}</div>',
+        unsafe_allow_html=True
     )
 
 
@@ -1611,204 +1120,179 @@ def process_video(video_path, model):
 
 if st.session_state.page == "home":
 
-    show_logo(
-        width=120
-    )
-
     st.markdown(
-        """
-<div class="main-title">
-    ♻️ EcoBin AI – Smart Garbage Overflow Detection
-</div>
-""",
+        '<div class="hero-title">♻️ EcoBin AI</div>',
         unsafe_allow_html=True
     )
 
-    left_col, right_col = st.columns(
-        [0.38, 0.62],
-        gap="large"
+    st.markdown(
+        '<div class="hero-subtitle">'
+        'Smart Garbage Overflow Detection using Artificial Intelligence'
+        '</div>',
+        unsafe_allow_html=True
     )
 
-    # --------------------------------------------------------
-    # LEFT
-    # --------------------------------------------------------
+    hero_left, hero_right = st.columns([1, 1.25], gap="large")
 
-    with left_col:
+    with hero_left:
+        logo_path = os.path.join(os.path.dirname(__file__), "logo.png")
+        logo_html = ""
 
         st.markdown(
             """
-<div class="aicw-text">
-    AI Career for Women
-    <br>
-    (AICW)
+<div class="hero-card">
+<div class="hero-left">
+<div class="program-pill">🎓 AICW PROGRAM</div>
+<div class="hero-career">AI Career for Women</div>
+<div class="hero-capstone">Capstone Project</div>
+<div class="hero-project-name">♻️ EcoBin AI</div>
+</div>
 </div>
 """,
             unsafe_allow_html=True
         )
 
-        st.markdown(
-            """
-<div class="capstone-text">
-    Capstone Project
-</div>
-""",
-            unsafe_allow_html=True
-        )
-
-        st.write("")
-
-        if st.button(
-            "🔍  PREDICT",
-            key="predict",
-            use_container_width=True
-        ):
-
-            st.session_state.page = "predict"
-
-            st.rerun()
-
-    # --------------------------------------------------------
-    # RIGHT
-    # --------------------------------------------------------
-
-    with right_col:
-
-        st.markdown(
-            """
-<div class="description-title">
-    Project Description
-</div>
-""",
-            unsafe_allow_html=True
-        )
-
-        with st.container(
-            border=True
-        ):
-
+        if os.path.exists(logo_path):
+            # Keep the logo inside the same visual area without creating
+            # a large empty block between the AICW content and logo.
             st.markdown(
-                """
-EcoBin AI is an AI-powered Smart Garbage Overflow
-Detection System designed to automatically identify
-overflowing garbage bins using computer vision and
-YOLOv8 object detection.
+                '<div style="margin-top:-100px; margin-left:25px; '
+                'position:relative; z-index:2;">',
+                unsafe_allow_html=True
+            )
+            st.image(logo_path, width=64)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-The system analyzes images, camera-captured photos,
-and CCTV/video files to identify garbage overflow
-conditions.
+    with hero_right:
+        st.markdown(
+            """
+<div class="description-card">
+<div class="description-heading">🌱 Project Description</div>
 
-The trained YOLOv8 model classifies the detected
-garbage condition into two classes:
-<b>Normal</b> and <b>Overflow</b>.
+<p>
+EcoBin AI is an AI-powered Smart Garbage Overflow Detection System
+designed to automatically identify overflowing garbage bins using
+computer vision and YOLOv8 object detection.
+</p>
 
-When an overflow condition is detected, EcoBin AI
-automatically generates an alert containing the
-live location, date and time, and violation status.
-The alert is also sent to the configured user's
-email address.
+<p>
+The system analyzes images, camera-captured photos, and CCTV/video
+files to identify garbage overflow conditions.
+</p>
 
-This system helps reduce manual monitoring effort,
-support faster waste-management response, and
-improve cleanliness in public and residential areas.
+<p>
+The trained YOLOv8 model classifies the detected garbage condition
+into two classes: <b>Normal</b> and <b>Overflow</b>.
+</p>
+
+<p>
+When an overflow condition is detected, EcoBin AI automatically
+generates an alert containing the live location, date and time,
+and violation status. The alert is also sent to the configured
+user's email address.
+</p>
+</div>
+""",
+            unsafe_allow_html=True
+        )
+
+    st.markdown(
+        '<div class="section-title">⚡ System Capabilities</div>',
+        unsafe_allow_html=True
+    )
+
+    caps = [
+        ("🖼️", "Image Detection", "Analyze uploaded garbage images"),
+        ("📷", "Camera Detection", "Capture and detect using camera"),
+        ("🎥", "CCTV Analysis", "Process recorded video footage"),
+        ("🚨", "Smart Alerts", "Location and email notification"),
+    ]
+
+    cap_cols = st.columns(4, gap="medium")
+
+    for col, (icon, title, text) in zip(cap_cols, caps):
+        with col:
+            st.markdown(
+                f"""
+<div class="capability-card">
+<div class="capability-icon">{icon}</div>
+<div class="capability-title">{title}</div>
+<div class="capability-text">{text}</div>
+</div>
 """,
                 unsafe_allow_html=True
             )
 
-    st.write("")
-    st.write("")
+    st.markdown('<div style="height:14px"></div>', unsafe_allow_html=True)
 
-    # --------------------------------------------------------
-    # TEAM DETAILS
-    # --------------------------------------------------------
+    st.markdown('<div class="primary-btn">', unsafe_allow_html=True)
+    if st.button(
+        "🔎  START AI DETECTION",
+        key="start_detection",
+        use_container_width=True
+    ):
+        st.session_state.page = "predict"
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    team_col, gmail_col, guide_col = st.columns(
-        [1.25, 1.25, 0.75],
-        gap="large"
+    st.markdown(
+        '<div class="section-title">👥 Project Team</div>',
+        unsafe_allow_html=True
+    )
+
+    team_col, mail_col, guide_col = st.columns(
+        [1.25, 1.25, .85],
+        gap="medium"
     )
 
     with team_col:
-
-        with st.container(
-            border=True
-        ):
-
-            st.markdown(
-                """
-<div class="card-heading">
-    TEAM MEMBERS
-</div>
-
-<div class="card-text">
-
+        st.markdown(
+            """
+<div class="team-card">
+<div class="team-heading">TEAM MEMBERS</div>
+<div class="team-text">
 1. K.Lalitha Devi<br>
 2. Y.Haasini<br>
 3. G.Sri Divya<br>
 4. N.Sushma sri
-
+</div>
 </div>
 """,
-                unsafe_allow_html=True
-            )
+            unsafe_allow_html=True
+        )
 
-    with gmail_col:
-
-        with st.container(
-            border=True
-        ):
-
-            st.markdown(
-                """
-<div class="card-heading">
-    GMAIL
+    with mail_col:
+        st.markdown(
+            """
+<div class="team-card">
+<div class="team-heading">GMAIL</div>
+<div class="team-text">
+<a href="mailto:lalithadevi825@gmail.com">lalithadevi825@gmail.com</a><br>
+<a href="mailto:haasiniyanamadala@gmail.com">haasiniyanamadala@gmail.com</a><br>
+<a href="mailto:galidivya534@gmail.com">galidivya534@gmail.com</a><br>
+<a href="mailto:nadimpallisushmasri29@gmail.com">nadimpallisushmasri29@gmail.com</a>
 </div>
-
-<div class="card-text">
-
-lalithadevi825@gmail.com<br>
-haasiniyanamadala@gmail.com<br>
-galidivya534@gmail.com<br>
-nadimpallisushmasri29@gmail.com
-
 </div>
 """,
-                unsafe_allow_html=True
-            )
+            unsafe_allow_html=True
+        )
 
     with guide_col:
-
-        with st.container(
-            border=True
-        ):
-
-            st.markdown(
-                """
-<div class="card-heading">
-    GUIDE NAME
+        st.markdown(
+            """
+<div class="team-card">
+<div class="team-heading">GUIDE NAME</div>
+<div class="team-text">
+<b>MD. Abdul Aziz</b><br><br>
+Trainer, Co-Lead-AICW
 </div>
-
-<div class="card-text">
-    MD.Abdul Aziz
-</div>
-
-<br>
-
-<div class="card-heading">
-    Designation
-</div>
-
-<div class="card-text">
-    Trainer, Co-Lead-AICW
 </div>
 """,
-                unsafe_allow_html=True
-            )
+            unsafe_allow_html=True
+        )
 
     st.markdown(
-        """
-<div class="footer-text">
-    EcoBin AI – Smart Garbage Overflow Detection
-</div>
-""",
+        '<div class="footer-text">EcoBin AI • Smart Garbage Overflow Detection</div>',
         unsafe_allow_html=True
     )
 
@@ -1819,938 +1303,362 @@ nadimpallisushmasri29@gmail.com
 
 else:
 
-    # --------------------------------------------------------
-    # HEADER
-    # --------------------------------------------------------
+    top_left, top_right = st.columns([.2, 1], gap="medium")
 
-    show_logo(
-        width=85
-    )
+    with top_left:
+        if st.button("← Home", key="back_home"):
+            st.session_state.page = "home"
+            st.rerun()
 
-    st.markdown(
-        """
-<div class="detect-title">
-    ♻️ EcoBin AI
+    with top_right:
+        st.markdown(
+            """
+<div class="page-header">
+<div class="page-header-title">♻️ EcoBin AI Detection Center</div>
+<div class="page-header-sub">
+AI-powered image, camera and CCTV garbage overflow analysis
+</div>
 </div>
 """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        """
-<div class="detect-subtitle">
-    AI-Powered Smart Garbage Overflow Detection System
-</div>
-""",
-        unsafe_allow_html=True
-    )
-
-    if st.button(
-        "← Back to Home",
-        key="back"
-    ):
-
-        st.session_state.page = "home"
-        st.rerun()
-
-    st.write("")
-
-
-    # ========================================================
-    # LOCATION
-    # ========================================================
+            unsafe_allow_html=True
+        )
 
     display_live_location()
 
-    st.write("")
-
-
-    # ========================================================
-    # MODEL
-    # ========================================================
-
     try:
-
         model = load_model()
-
     except Exception as e:
-
-        st.error(
-            f"❌ best.pt model load avvaledu: {e}"
-        )
-
-        st.info(
-            "Make sure best.pt is in the same folder as app.py."
-        )
-
+        st.error(f"❌ best.pt model load avvaledu: {e}")
+        st.info("Make sure best.pt is in the same folder as app.py.")
         st.stop()
 
 
     # ========================================================
-    # IMAGE DETECTION
+    # IMAGE
     # ========================================================
 
-    st.markdown(
-        """
-<div class="section-title">
-    🖼️ Image Detection
-</div>
-
-<div class="section-subtitle">
-    Upload a garbage-bin image and let EcoBin AI detect
-    the current garbage condition.
-</div>
-""",
-        unsafe_allow_html=True
-    )
+    section_title("🖼️", "Image Detection")
 
     image_upload_col, image_input_col, image_output_col = st.columns(
-        3,
-        gap="large"
+        3, gap="medium"
     )
 
-
-    # ========================================================
-    # IMAGE UPLOAD
-    # ========================================================
+    input_image = None
 
     with image_upload_col:
-
         st.markdown(
             """
-<div class="ui-card">
-
-<div class="ui-card-title">
-    📤 Upload
-</div>
-
-<div class="empty-message">
-
-<div class="empty-icon">🖼️</div>
-
-<div class="empty-title">
-    Select Garbage Image
-</div>
-
-<div class="empty-text">
-    Upload JPG, JPEG or PNG image.<br>
-    The selected image will appear in the Input panel.
-</div>
-
-</div>
-
-</div>
+<div class="io-card">
+<div class="io-card-title">📤 Upload</div>
 """,
             unsafe_allow_html=True
         )
 
         uploaded_image = st.file_uploader(
-            "Choose image",
-            type=[
-                "jpg",
-                "jpeg",
-                "png"
-            ],
+            "Choose an image",
+            type=["jpg", "jpeg", "png"],
             key="image_upload"
         )
 
+        if uploaded_image:
+            st.success("Image uploaded successfully")
 
-    # ========================================================
-    # IMAGE INPUT
-    # ========================================================
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with image_input_col:
-
         st.markdown(
             """
-<div class="ui-card">
-
-<div class="ui-card-title">
-    🖼️ Input
-</div>
+<div class="io-card">
+<div class="io-card-title">🖼️ Input</div>
 """,
             unsafe_allow_html=True
         )
 
-        input_image = None
-
         if uploaded_image:
-
             input_image = Image.open(
                 uploaded_image
             ).convert("RGB")
-
-            st.image(
-                input_image,
-                use_container_width=True
-            )
-
-            st.markdown(
-                """
-<div style="
-    text-align:center;
-    color:#64748b;
-    font-size:12px;
-    margin-top:8px;
-">
-    ✓ Image ready for AI analysis
-</div>
-""",
-                unsafe_allow_html=True
-            )
-
+            st.image(input_image, use_container_width=True)
         else:
+            empty_box("Your uploaded image will appear here.")
 
-            show_empty_card(
-                "📷",
-                "Waiting for Input",
-                "Your uploaded image will be displayed here."
-            )
-
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-
-    # ========================================================
-    # IMAGE OUTPUT
-    # ========================================================
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with image_output_col:
-
         st.markdown(
             """
-<div class="ui-card">
-
-<div class="ui-card-title">
-    🎯 Output
-</div>
+<div class="io-card">
+<div class="io-card-title">🎯 Output</div>
 """,
             unsafe_allow_html=True
         )
 
         if uploaded_image and input_image is not None:
-
-            st.markdown(
-                '<div class="detect-button">',
-                unsafe_allow_html=True
-            )
-
-            detect_image_clicked = st.button(
-                "🔍  Detect Image",
+            if st.button(
+                "🔍 Detect Image",
                 key="detect_image",
                 use_container_width=True
-            )
-
-            st.markdown(
-                '</div>',
-                unsafe_allow_html=True
-            )
-
-            if detect_image_clicked:
-
-                with st.spinner(
-                    "🤖 AI is analyzing the image..."
-                ):
-
+            ):
+                with st.spinner("🤖 AI is analyzing the image..."):
                     result, detections = predict_image(
-                        input_image,
-                        model
+                        input_image, model
                     )
-
                 st.session_state.image_result = (
-                    result,
-                    detections
+                    result, detections
                 )
 
             if st.session_state.image_result is not None:
-
-                result, detections = (
-                    st.session_state.image_result
-                )
-
-                display_prediction_inside_card(
-                    result,
-                    detections
-                )
-
+                st.success("Prediction completed")
             else:
-
-                st.markdown(
-                    """
-<div style="
-    margin-top:12px;
-    padding:11px;
-    border-radius:9px;
-    background:#f8fafc;
-    border:1px solid #e2e8f0;
-    text-align:center;
-    color:#64748b;
-    font-size:12px;
-">
-    👆 Click <b>Detect Image</b> to start prediction.
-</div>
-""",
-                    unsafe_allow_html=True
-                )
-
+                empty_box("Click Detect Image to generate output.")
         else:
+            empty_box("Prediction output will appear here.")
 
-            show_empty_card(
-                "🎯",
-                "Prediction Output",
-                "Detection result, confidence and status will appear here."
-            )
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
+    if st.session_state.image_result is not None:
+        result, detections = st.session_state.image_result
+        show_prediction_result(
+            result,
+            detections,
+            "Image Prediction Result"
         )
-
-
-    # ========================================================
-    # CAMERA DETECTION
-    # ========================================================
-
-    st.markdown(
-        """
-<div class="section-title">
-    📷 Camera Detection
-</div>
-
-<div class="section-subtitle">
-    Capture a live image using your device camera.
-</div>
-""",
-        unsafe_allow_html=True
-    )
-
-    camera_col, camera_input_col, camera_output_col = st.columns(
-        3,
-        gap="large"
-    )
 
 
     # ========================================================
     # CAMERA
     # ========================================================
 
-    with camera_col:
+    section_title("📷", "Camera Detection")
 
+    camera_col, camera_input_col, camera_output_col = st.columns(
+        3, gap="medium"
+    )
+
+    camera_pil = None
+
+    with camera_col:
         st.markdown(
             """
-<div class="ui-card">
-
-<div class="ui-card-title">
-    📷 Camera
-</div>
+<div class="io-card">
+<div class="io-card-title">📷 Camera</div>
 """,
             unsafe_allow_html=True
         )
 
         camera_image = st.camera_input(
-            "Capture Image",
+            "Capture image",
             key="camera"
         )
 
-        if not camera_image:
-
-            st.markdown(
-                """
-<div class="empty-message">
-
-<div class="empty-icon">
-    📸
-</div>
-
-<div class="empty-title">
-    Camera Ready
-</div>
-
-<div class="empty-text">
-    Capture a garbage-bin image using your camera.
-</div>
-
-</div>
-""",
-                unsafe_allow_html=True
-            )
-
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-
-    # ========================================================
-    # CAMERA INPUT
-    # ========================================================
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with camera_input_col:
-
         st.markdown(
             """
-<div class="ui-card">
-
-<div class="ui-card-title">
-    🖼️ Input
-</div>
+<div class="io-card">
+<div class="io-card-title">🖼️ Input</div>
 """,
             unsafe_allow_html=True
         )
 
-        camera_pil = None
-
         if camera_image:
-
             camera_pil = Image.open(
                 camera_image
             ).convert("RGB")
-
-            st.image(
-                camera_pil,
-                use_container_width=True
-            )
-
+            st.image(camera_pil, use_container_width=True)
         else:
+            empty_box("Captured camera image will appear here.")
 
-            show_empty_card(
-                "📷",
-                "Camera Input",
-                "Captured camera image will appear here."
-            )
-
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-
-    # ========================================================
-    # CAMERA OUTPUT
-    # ========================================================
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with camera_output_col:
-
         st.markdown(
             """
-<div class="ui-card">
-
-<div class="ui-card-title">
-    🎯 Output
-</div>
+<div class="io-card">
+<div class="io-card-title">🎯 Output</div>
 """,
             unsafe_allow_html=True
         )
 
         if camera_image and camera_pil is not None:
-
-            st.markdown(
-                '<div class="detect-button">',
-                unsafe_allow_html=True
-            )
-
-            detect_camera_clicked = st.button(
-                "🔍  Detect Camera Image",
+            if st.button(
+                "🔍 Detect Camera Image",
                 key="detect_camera",
                 use_container_width=True
-            )
-
-            st.markdown(
-                '</div>',
-                unsafe_allow_html=True
-            )
-
-            if detect_camera_clicked:
-
-                with st.spinner(
-                    "🤖 AI is analyzing camera image..."
-                ):
-
+            ):
+                with st.spinner("🤖 Analyzing camera image..."):
                     result, detections = predict_image(
-                        camera_pil,
-                        model
+                        camera_pil, model
                     )
-
                 st.session_state.camera_result = (
-                    result,
-                    detections
+                    result, detections
                 )
 
             if st.session_state.camera_result is not None:
-
-                result, detections = (
-                    st.session_state.camera_result
-                )
-
-                display_prediction_inside_card(
-                    result,
-                    detections,
-                    "Camera Prediction"
-                )
-
+                st.success("Prediction completed")
             else:
-
-                st.markdown(
-                    """
-<div style="
-    margin-top:12px;
-    padding:11px;
-    border-radius:9px;
-    background:#f8fafc;
-    border:1px solid #e2e8f0;
-    text-align:center;
-    color:#64748b;
-    font-size:12px;
-">
-    👆 Click <b>Detect Camera Image</b> to start prediction.
-</div>
-""",
-                    unsafe_allow_html=True
-                )
-
+                empty_box("Click Detect Camera Image to generate output.")
         else:
+            empty_box("Camera prediction will appear here.")
 
-            show_empty_card(
-                "🎯",
-                "Camera Result",
-                "Prediction result will appear here after detection."
-            )
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
+    if st.session_state.camera_result is not None:
+        result, detections = st.session_state.camera_result
+        show_prediction_result(
+            result,
+            detections,
+            "Camera Prediction Result"
         )
 
 
     # ========================================================
-    # VIDEO / CCTV
+    # VIDEO
     # ========================================================
 
-    st.markdown(
-        """
-<div class="section-title">
-    🎥 Video / CCTV Detection
-</div>
-
-<div class="section-subtitle">
-    Upload a recorded CCTV/video file for frame-by-frame
-    garbage overflow analysis.
-</div>
-""",
-        unsafe_allow_html=True
-    )
+    section_title("🎥", "CCTV / Video Detection")
 
     video_upload_col, video_input_col, video_output_col = st.columns(
-        3,
-        gap="large"
+        3, gap="medium"
     )
 
-
-    # ========================================================
-    # VIDEO UPLOAD
-    # ========================================================
-
     with video_upload_col:
-
         st.markdown(
             """
-<div class="ui-card">
-
-<div class="ui-card-title">
-    📤 Upload Video
-</div>
-
-<div class="empty-message">
-
-<div class="empty-icon">
-    🎥
-</div>
-
-<div class="empty-title">
-    Select CCTV Video
-</div>
-
-<div class="empty-text">
-    Upload MP4, AVI, MOV, MKV or MPEG video.
-</div>
-
-</div>
-
-</div>
+<div class="io-card">
+<div class="io-card-title">📤 Upload Video</div>
 """,
             unsafe_allow_html=True
         )
 
         uploaded_video = st.file_uploader(
-            "Choose video",
-            type=[
-                "mp4",
-                "avi",
-                "mov",
-                "mkv",
-                "mpeg"
-            ],
+            "Choose CCTV/video",
+            type=["mp4", "avi", "mov", "mkv", "mpeg"],
             key="video_upload"
         )
 
-
-    # ========================================================
-    # VIDEO INPUT
-    # ========================================================
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with video_input_col:
-
         st.markdown(
             """
-<div class="ui-card">
-
-<div class="ui-card-title">
-    🎬 Input
-</div>
+<div class="io-card">
+<div class="io-card-title">🎬 Input</div>
 """,
             unsafe_allow_html=True
         )
 
         if uploaded_video:
-
-            st.video(
-                uploaded_video
-            )
-
-            st.markdown(
-                """
-<div style="
-    text-align:center;
-    color:#64748b;
-    font-size:12px;
-    margin-top:8px;
-">
-    ✓ CCTV video ready for analysis
-</div>
-""",
-                unsafe_allow_html=True
-            )
-
+            st.video(uploaded_video)
         else:
+            empty_box("Uploaded CCTV/video will appear here.")
 
-            show_empty_card(
-                "🎞️",
-                "Video Input",
-                "Uploaded CCTV footage will appear here."
-            )
-
-        st.markdown(
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-
-    # ========================================================
-    # VIDEO OUTPUT
-    # ========================================================
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with video_output_col:
-
         st.markdown(
             """
-<div class="ui-card">
-
-<div class="ui-card-title">
-    🎯 Output
-</div>
+<div class="io-card">
+<div class="io-card-title">🎯 Output</div>
 """,
             unsafe_allow_html=True
         )
 
         if uploaded_video:
-
-            st.markdown(
-                '<div class="detect-button">',
-                unsafe_allow_html=True
-            )
-
-            analyze_video_clicked = st.button(
-                "🎥  Analyze CCTV Video",
+            if st.button(
+                "🎥 Analyze CCTV Video",
                 key="detect_video",
                 use_container_width=True
-            )
-
-            st.markdown(
-                '</div>',
-                unsafe_allow_html=True
-            )
-
-            if analyze_video_clicked:
-
-                video_bytes = uploaded_video.getvalue()
-
+            ):
                 temp_video = tempfile.NamedTemporaryFile(
                     delete=False,
                     suffix=".mp4"
                 )
-
-                temp_video.write(
-                    video_bytes
-                )
-
+                temp_video.write(uploaded_video.getvalue())
                 temp_video.close()
 
                 try:
-
                     with st.spinner(
                         "🤖 AI is analyzing CCTV video..."
                     ):
-
-                        (
-                            video_status,
-                            output_video_bytes,
-                            video_conf
-                        ) = process_video(
+                        video_result = process_video(
                             temp_video.name,
                             model
                         )
 
-                    st.session_state.video_result = (
-                        video_status,
-                        output_video_bytes,
-                        video_conf
-                    )
+                    st.session_state.video_result = video_result
 
                 except Exception as e:
-
-                    st.error(
-                        f"❌ Video processing failed: {e}"
-                    )
+                    st.error(f"❌ Video processing failed: {e}")
 
                 finally:
-
-                    if os.path.exists(
-                        temp_video.name
-                    ):
-
-                        os.remove(
-                            temp_video.name
-                        )
-
-
-            # ------------------------------------------------
-            # VIDEO RESULT
-            # ------------------------------------------------
+                    if os.path.exists(temp_video.name):
+                        os.remove(temp_video.name)
 
             if st.session_state.video_result is not None:
-
-                (
-                    video_status,
-                    output_video_bytes,
-                    video_conf
-                ) = st.session_state.video_result
-
-
-                # --------------------------------------------
-                # COMPLETED
-                # --------------------------------------------
-
-                st.markdown(
-                    """
-<div class="completed-box">
-
-<div class="completed-title">
-    ✅ Prediction Completed
-</div>
-
-<div class="completed-text">
-    CCTV video analysis has been completed successfully.
-</div>
-
-</div>
-""",
-                    unsafe_allow_html=True
-                )
-
-
-                # --------------------------------------------
-                # OUTPUT VIDEO
-                # --------------------------------------------
-
-                if output_video_bytes is not None:
-
-                    st.markdown(
-                        """
-<div style="
-    color:#173f73;
-    font-size:14px;
-    font-weight:850;
-    margin-bottom:8px;
-">
-    🎬 AI Processed Output
-</div>
-""",
-                        unsafe_allow_html=True
-                    )
-
-                    st.video(
-                        output_video_bytes
-                    )
-
-                else:
-
-                    st.error(
-                        "❌ Output video could not be generated."
-                    )
-
-
-                # --------------------------------------------
-                # OVERFLOW
-                # --------------------------------------------
-
-                if video_status == "GARBAGE OVERFLOW":
-
-                    st.markdown(
-                        f"""
-<div class="alert-box">
-
-<h3>🚨 Garbage Overflow Detected</h3>
-
-<b>Detection:</b> Overflow<br><br>
-
-<b>Confidence:</b>
-{video_conf * 100:.2f}%<br><br>
-
-<b>📍 Location:</b><br>
-{get_location().replace(chr(10), "<br>")}<br><br>
-
-<b>🕒 Date & Time:</b>
-{get_current_time()}<br><br>
-
-<b>⚠️ Status:</b>
-Violation Detected
-
-</div>
-""",
-                        unsafe_allow_html=True
-                    )
-
-                    generate_alert()
-
-
-                # --------------------------------------------
-                # NORMAL
-                # --------------------------------------------
-
-                elif video_status == "NORMAL":
-
-                    st.markdown(
-                        """
-<div class="normal-box">
-
-<h3>✅ No Garbage Overflow Detected</h3>
-
-<b>Detection:</b> Normal<br><br>
-
-<b>Status:</b>
-Normal
-
-</div>
-""",
-                        unsafe_allow_html=True
-                    )
-
-
-                # --------------------------------------------
-                # NO CLEAR
-                # --------------------------------------------
-
-                else:
-
-                    st.warning(
-                        "⚠️ No clear garbage condition "
-                        "was detected in the video."
-                    )
-
-
-                # --------------------------------------------
-                # VIDEO DETAILS
-                # --------------------------------------------
-
-                st.markdown(
-                    f"""
-<div class="details-card">
-
-<div class="details-title">
-    🔎 Video Detection Details
-</div>
-
-<div class="detail-row">
-
-<b>Final Status:</b>
-{video_status.title()}
-
-</div>
-
-<div class="detail-row">
-
-<b>Best Confidence:</b>
-{video_conf * 100:.2f}%
-
-</div>
-
-<div class="detail-row">
-
-<b>Location:</b>
-{st.session_state.live_area or "Unavailable"}
-
-</div>
-
-</div>
-""",
-                    unsafe_allow_html=True
-                )
-
+                st.success("Video analysis completed")
             else:
-
-                st.markdown(
-                    """
-<div style="
-    margin-top:12px;
-    padding:11px;
-    border-radius:9px;
-    background:#f8fafc;
-    border:1px solid #e2e8f0;
-    text-align:center;
-    color:#64748b;
-    font-size:12px;
-">
-    👆 Click <b>Analyze CCTV Video</b> to process the video.
-</div>
-""",
-                    unsafe_allow_html=True
-                )
-
+                empty_box("Click Analyze CCTV Video to generate output.")
         else:
+            empty_box("Video prediction output will appear here.")
 
-            show_empty_card(
-                "🎯",
-                "Video Prediction Output",
-                "Processed CCTV video and detection status will appear here."
-            )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    if st.session_state.video_result is not None:
+        video_status, output_video_bytes, video_conf = (
+            st.session_state.video_result
+        )
 
         st.markdown(
-            "</div>",
+            """
+<div class="result-panel">
+<div class="result-title">🎬 AI Processed Video Output</div>
+""",
             unsafe_allow_html=True
         )
 
+        if output_video_bytes is not None:
+            st.video(output_video_bytes)
+        else:
+            st.error("❌ Output video could not be generated.")
 
-    # ========================================================
-    # FOOTER
-    # ========================================================
-
-    st.markdown(
-        """
-<div class="footer-text">
-    EcoBin AI – Smart Garbage Overflow Detection
+        if video_status == "GARBAGE OVERFLOW":
+            st.markdown(
+                f"""
+<div class="status-overflow">
+<div class="status-title">🚨 Garbage Overflow Detected</div>
+<b>Detection:</b> Overflow<br>
+<b>Best Confidence:</b> {video_conf * 100:.2f}%<br>
+<b>Location:</b> {get_location().replace(chr(10), " | ")}<br>
+<b>Date & Time:</b> {get_current_time()}<br>
+<b>Status:</b> Violation Detected
 </div>
 """,
+                unsafe_allow_html=True
+            )
+            generate_alert()
+
+        elif video_status == "NORMAL":
+            st.markdown(
+                """
+<div class="status-normal">
+<div class="status-title">✅ No Garbage Overflow Detected</div>
+<b>Status:</b> Normal
+</div>
+""",
+                unsafe_allow_html=True
+            )
+        else:
+            st.warning(
+                "⚠️ No clear garbage condition was detected in the video."
+            )
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown(
+        '<div class="footer-text">'
+        'EcoBin AI • AI-Powered Smart Garbage Overflow Detection'
+        '</div>',
         unsafe_allow_html=True
     )
