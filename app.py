@@ -9,8 +9,6 @@ import smtplib
 import subprocess
 import imageio_ffmpeg
 import requests
-import base64
-import textwrap
 
 from email.message import EmailMessage
 from datetime import datetime
@@ -55,100 +53,86 @@ for key, value in defaults.items():
 
 
 # ============================================================
-# HTML HELPER
+# DARK PREMIUM UI
 # ============================================================
 
-def render_html(html):
+st.markdown(
     """
-    Removes Python indentation from HTML so Streamlit
-    doesn't display the HTML as a code block.
-    """
-    st.markdown(
-        textwrap.dedent(html),
-        unsafe_allow_html=True
-    )
-
-
-# ============================================================
-# PREMIUM DARK UI
-# ============================================================
-
-render_html(
-"""
 <style>
+
+/* ============================================================
+   GLOBAL
+   ============================================================ */
 
 :root {
     --bg: #050b14;
-    --bg2: #08111e;
-    --card: #0b1626;
-    --card2: #0e1b2d;
+    --bg2: #08111f;
+    --card: #0b1627;
+    --card2: #0e1b2e;
 
     --green: #22c55e;
     --green2: #16a34a;
-
     --blue: #3b82f6;
     --purple: #7c5cff;
 
-    --text: #f8fafc;
-    --text2: #dbeafe;
+    --white: #f8fafc;
+    --text: #e5edf8;
     --muted: #94a3b8;
-
-    --border: #203754;
+    --line: #233a57;
 
     --danger: #ef4444;
-    --warning: #fb923c;
+    --warning: #f59e0b;
 }
 
+html,
+body,
+[data-testid="stAppViewContainer"] {
+
+    background:
+        radial-gradient(
+            circle at 10% 5%,
+            rgba(34,197,94,.09),
+            transparent 24%
+        ),
+        radial-gradient(
+            circle at 90% 10%,
+            rgba(59,130,246,.10),
+            transparent 26%
+        ),
+        #050b14 !important;
+}
 
 .stApp {
 
     background:
         radial-gradient(
-            circle at 8% 5%,
+            circle at 10% 5%,
             rgba(34,197,94,.08),
             transparent 25%
         ),
-
         radial-gradient(
-            circle at 90% 8%,
-            rgba(59,130,246,.10),
-            transparent 28%
+            circle at 90% 10%,
+            rgba(124,92,255,.08),
+            transparent 25%
         ),
+        #050b14 !important;
 
-        radial-gradient(
-            circle at 50% 90%,
-            rgba(124,92,255,.06),
-            transparent 28%
-        ),
-
-        #050b14;
-
-    color: var(--text);
+    color: var(--text) !important;
 }
-
 
 .block-container {
 
     max-width: 1280px;
 
     padding:
-        22px
-        4%
-        30px
-        4%;
+        22px 3% 30px 3%;
 }
-
-
-/* ============================================================
-   HIDE STREAMLIT DEFAULT
-   ============================================================ */
 
 #MainMenu,
 footer,
 header {
     visibility: hidden;
 }
-
 
 .stMarkdown,
 .stMarkdown p,
@@ -158,7 +142,7 @@ header {
 
 
 /* ============================================================
-   HERO TITLE
+   HOME TITLE
    ============================================================ */
 
 .hero-title {
@@ -171,11 +155,10 @@ header {
 
     font-weight: 900;
 
-    letter-spacing: -.5px;
-
     margin: 0;
-}
 
+    letter-spacing: -.5px;
+}
 
 .hero-subtitle {
 
@@ -186,95 +169,112 @@ header {
     font-size: 13px;
 
     margin:
-        5px
-        0
-        22px
-        0;
+        4px 0 20px 0;
 }
 
 
 /* ============================================================
-   HOME HERO CARD
+   HERO CARD
    ============================================================ */
 
 .hero-card {
 
-    min-height: 330px;
+    position: relative;
+
+    width: 100%;
+
+    min-height: 360px;
+
+    box-sizing: border-box;
 
     background:
-        radial-gradient(
-            circle at 95% 100%,
-            rgba(34,197,94,.09),
-            transparent 28%
-        ),
-
-        radial-gradient(
-            circle at 10% 0%,
-            rgba(59,130,246,.07),
-            transparent 25%
-        ),
-
-        #0a1422;
+        linear-gradient(
+            145deg,
+            rgba(12,25,43,.98),
+            rgba(7,16,29,.98)
+        );
 
     border:
-        1px solid
-        #203754;
+        1px solid #294563;
 
     border-radius: 22px;
 
     padding:
-        38px
-        40px
-        30px
-        40px;
-
-    box-shadow:
-        0 18px 50px
-        rgba(0,0,0,.35);
-
-    position: relative;
+        42px 38px 32px 38px;
 
     overflow: hidden;
 
-    box-sizing: border-box;
+    box-shadow:
+        0 18px 45px rgba(0,0,0,.35);
 }
 
 
-/* TOP GRADIENT LINE */
+/* TOP COLOR LINE */
 
-.hero-card:before {
+.hero-card::before {
 
     content: "";
 
     position: absolute;
 
+    top: 0;
     left: 0;
 
-    top: 0;
-
     width: 100%;
-
     height: 5px;
 
     background:
         linear-gradient(
             90deg,
             #22c55e,
-            #2f80ed,
+            #3b82f6,
             #7c5cff
         );
 }
 
 
+/* GREEN GLOW */
+
+.hero-card::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 280px;
+    height: 280px;
+
+    right: -130px;
+    bottom: -170px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(34,197,94,.10),
+            transparent 68%
+        );
+
+    pointer-events: none;
+}
+
+
 /* ============================================================
-   HERO TOP
+   HERO CONTENT
    ============================================================ */
 
-.hero-top-content {
+.hero-content {
 
     position: relative;
 
     z-index: 2;
+
+    height: 100%;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: flex-start;
 }
 
 
@@ -289,31 +289,31 @@ header {
     width: fit-content;
 
     padding:
-        10px
-        16px;
+        10px 16px;
 
     border-radius: 999px;
 
     background:
-        rgba(37,99,235,.10);
-
-    color: #bfdbfe;
+        rgba(21,55,91,.55);
 
     border:
-        1px solid
-        #294b75;
+        1px solid #2d5b88;
+
+    color: #bcd7f7;
 
     font-size: 12px;
 
-    font-weight: 850;
+    font-weight: 900;
 
-    margin-bottom: 23px;
+    letter-spacing: .1px;
+
+    margin-bottom: 25px;
 }
 
 
 /* CAREER */
 
-.hero-career-new {
+.hero-career {
 
     color: #f8fafc;
 
@@ -321,127 +321,136 @@ header {
 
     font-weight: 900;
 
-    line-height: 1.18;
+    line-height: 1.2;
+
+    margin-bottom: 12px;
 
     letter-spacing: -.8px;
-
-    margin: 0;
 }
 
 
 /* CAPSTONE */
 
-.hero-capstone-new {
+.hero-capstone {
 
-    color: #94a3b8;
+    color: #9aabc1;
 
-    font-size: 18px;
+    font-size: 17px;
 
-    font-weight: 750;
+    font-weight: 800;
 
-    margin-top: 12px;
+    margin-bottom: 0;
 }
 
 
 /* ============================================================
-   HERO PROJECT AREA
+   PROJECT AREA
    ============================================================ */
 
 .hero-project-area {
 
-    display: flex;
+    position: absolute;
+
+    left: 38px;
+
+    right: 38px;
+
+    bottom: 28px;
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 125px;
 
     align-items: center;
 
-    justify-content: space-between;
+    column-gap: 20px;
 
-    gap: 25px;
-
-    margin-top: 46px;
-
-    position: relative;
-
-    z-index: 2;
+    z-index: 3;
 }
 
 
+/* PROJECT INFO */
+
 .hero-project-info {
 
-    flex: 1;
+    display: flex;
 
-    min-width: 0;
+    flex-direction: column;
+
+    justify-content: center;
 }
 
 
 /* PROJECT NAME */
 
-.hero-project-name-new {
+.hero-project-name {
 
-    color: #22c55e;
+    color: #22e66b;
 
-    font-size: 25px;
+    font-size: 22px;
 
     font-weight: 900;
 
     line-height: 1.2;
+
+    margin-bottom: 6px;
 }
 
 
 /* PROJECT SUBTITLE */
 
-.hero-project-subtitle-new {
+.hero-project-subtitle {
 
-    color: #94a3b8;
+    color: #9aaac0;
 
-    font-size: 13px;
+    font-size: 12px;
 
     font-weight: 700;
 
-    margin-top: 8px;
+    line-height: 1.4;
 }
 
 
-/* ============================================================
-   HERO LOGO
-   ============================================================ */
+/* LOGO */
 
 .hero-logo-container {
 
-    width: 108px;
+    width: 115px;
 
-    height: 108px;
-
-    flex-shrink: 0;
+    height: 115px;
 
     display: flex;
 
     align-items: center;
 
     justify-content: center;
+
+    justify-self: end;
+
+    background:
+        rgba(255,255,255,.96);
+
+    border-radius: 18px;
+
+    padding: 7px;
+
+    box-shadow:
+        0 10px 25px rgba(0,0,0,.35);
+
+    border:
+        1px solid rgba(255,255,255,.2);
 }
 
+.hero-logo-container img {
 
-.hero-logo-inside {
+    width: 100%;
 
-    width: 100px;
-
-    height: 100px;
+    height: 100%;
 
     object-fit: contain;
 
-    border-radius: 17px;
-
-    background: #ffffff;
-
-    padding: 5px;
-
-    border:
-        1px solid
-        rgba(255,255,255,.15);
-
-    box-shadow:
-        0 10px 30px
-        rgba(0,0,0,.40);
+    border-radius: 12px;
 }
 
 
@@ -451,36 +460,34 @@ header {
 
 .description-card {
 
-    min-height: 330px;
+    min-height: 360px;
+
+    box-sizing: border-box;
 
     background:
         linear-gradient(
             145deg,
-            #0c1828,
+            #0b1728,
             #091321
         );
 
     border:
-        1px solid
-        #203754;
+        1px solid #294563;
 
     border-radius: 22px;
 
     padding:
-        25px
-        27px;
+        25px 27px;
 
     box-shadow:
-        0 18px 45px
-        rgba(0,0,0,.28);
+        0 18px 40px rgba(0,0,0,.28);
 
     overflow: hidden;
 }
 
-
 .description-heading {
 
-    color: #e2e8f0;
+    color: #e7f0fa;
 
     font-size: 17px;
 
@@ -489,26 +496,21 @@ header {
     margin-bottom: 14px;
 }
 
-
 .description-card p {
 
-    color: #94a3b8;
+    color: #91a3b9;
 
     font-size: 12px;
 
     line-height: 1.8;
 
     margin:
-        0
-        0
-        13px
-        0;
+        0 0 14px 0;
 }
-
 
 .description-card b {
 
-    color: #cbd5e1;
+    color: #dbeafe;
 }
 
 
@@ -518,17 +520,14 @@ header {
 
 .section-title {
 
-    color: #e2e8f0;
+    color: #dce8f5;
 
     font-size: 18px;
 
     font-weight: 900;
 
     margin:
-        16px
-        0
-        10px
-        0;
+        22px 0 10px 0;
 }
 
 
@@ -541,53 +540,47 @@ header {
     background:
         linear-gradient(
             145deg,
-            #0d1a2b,
-            #091422
+            #0c1a2c,
+            #091523
         );
 
     border:
-        1px solid
-        #203754;
+        1px solid #284563;
 
     border-radius: 16px;
 
     padding:
-        16px
-        12px;
+        17px 12px;
 
-    min-height: 110px;
+    min-height: 105px;
 
     text-align: center;
 
     box-shadow:
-        0 8px 25px
-        rgba(0,0,0,.20);
+        0 8px 22px rgba(0,0,0,.25);
 }
-
 
 .capability-icon {
 
-    font-size: 21px;
+    font-size: 20px;
 
     margin-bottom: 5px;
 }
 
-
 .capability-title {
 
-    color: #e2e8f0;
+    color: #dce7f5;
 
-    font-size: 13px;
+    font-size: 12px;
 
     font-weight: 900;
 }
 
-
 .capability-text {
 
-    color: #94a3b8;
+    color: #8396ad;
 
-    font-size: 10.5px;
+    font-size: 10px;
 
     line-height: 1.45;
 
@@ -604,29 +597,26 @@ header {
     background:
         linear-gradient(
             145deg,
-            #0d1a2b,
-            #091422
+            #0c1a2c,
+            #091523
         );
 
     border:
-        1px solid
-        #203754;
+        1px solid #284563;
 
     border-radius: 17px;
 
-    padding: 19px;
+    padding: 18px;
 
-    min-height: 150px;
+    min-height: 145px;
 
     box-shadow:
-        0 8px 25px
-        rgba(0,0,0,.18);
+        0 8px 22px rgba(0,0,0,.23);
 }
-
 
 .team-heading {
 
-    color: #cbd5e1;
+    color: #b9cce0;
 
     font-size: 11px;
 
@@ -637,22 +627,18 @@ header {
     margin-bottom: 10px;
 }
 
-
 .team-text {
 
-    color: #94a3b8;
+    color: #91a3b8;
 
     font-size: 11px;
 
     line-height: 1.9;
 }
 
-
 .team-text a {
 
-    color: #60a5fa;
-
-    text-decoration: none;
+    color: #60a5fa !important;
 }
 
 
@@ -666,14 +652,80 @@ header {
 
     color: #64748b;
 
-    font-size: 11px;
+    font-size: 10px;
 
-    margin-top: 22px;
+    margin-top: 20px;
 }
 
 
 /* ============================================================
-   PREDICTION PAGE HEADER
+   PRIMARY BUTTON
+   ============================================================ */
+
+.primary-btn div.stButton > button {
+
+    background:
+        linear-gradient(
+            135deg,
+            #16a34a,
+            #2563eb
+        ) !important;
+
+    color: white !important;
+
+    border: none !important;
+
+    font-weight: 900 !important;
+
+    min-height: 44px;
+
+    border-radius: 11px !important;
+
+    box-shadow:
+        0 8px 22px rgba(37,99,235,.22);
+}
+
+
+/* ============================================================
+   NORMAL BUTTON
+   ============================================================ */
+
+div.stButton > button {
+
+    width: 100%;
+
+    min-height: 42px;
+
+    border-radius: 10px !important;
+
+    background:
+        #0d1a2c !important;
+
+    color: #dbeafe !important;
+
+    border:
+        1px solid #2c4967 !important;
+
+    font-weight: 800 !important;
+
+    transition: .2s ease;
+}
+
+div.stButton > button:hover {
+
+    background:
+        #13263d !important;
+
+    border-color:
+        #3b82f6 !important;
+
+    color:
+        #ffffff !important;
+}
+
+
+/* ============================================================
+   PAGE HEADER
    ============================================================ */
 
 .page-header {
@@ -681,45 +733,40 @@ header {
     background:
         linear-gradient(
             135deg,
-            #10243d,
-            #0c1b2e
+            #0c2139,
+            #102b48
         );
 
     border:
-        1px solid
-        #254464;
+        1px solid #315475;
 
-    border-radius: 20px;
+    border-radius: 18px;
 
     padding:
-        22px
-        25px;
+        21px 24px;
 
     color: white;
 
-    margin-bottom: 15px;
+    margin-bottom: 17px;
 
     box-shadow:
-        0 12px 35px
-        rgba(0,0,0,.28);
+        0 12px 30px rgba(0,0,0,.3);
 }
-
 
 .page-header-title {
 
-    font-size: 26px;
+    font-size: 25px;
 
     font-weight: 900;
 
     margin: 0;
 }
 
-
 .page-header-sub {
 
-    color: #94a3b8;
+    color: #a9bed4;
 
-    font-size: 12px;
+    font-size: 11px;
 
     margin-top: 5px;
 }
@@ -734,45 +781,38 @@ header {
     background:
         linear-gradient(
             135deg,
-            rgba(30,64,175,.12),
-            rgba(22,163,74,.08)
+            #0b1d2d,
+            #0c211a
         );
 
     border:
-        1px solid
-        #254464;
+        1px solid #28516b;
 
-    border-radius: 16px;
+    border-radius: 15px;
 
     padding:
-        15px
-        18px;
+        14px 17px;
 
     margin:
-        8px
-        0
-        17px
-        0;
+        8px 0 19px 0;
 }
-
 
 .location-heading {
 
-    color: #dbeafe;
+    color: #cde3f7;
 
-    font-size: 15px;
+    font-size: 14px;
 
     font-weight: 900;
 
-    margin-bottom: 9px;
+    margin-bottom: 8px;
 }
-
 
 .location-line {
 
-    color: #94a3b8 !important;
+    color: #9db0c4 !important;
 
-    font-size: 12px;
+    font-size: 11px;
 
     line-height: 1.7;
 }
@@ -784,17 +824,14 @@ header {
 
 .mode-title {
 
-    color: #e2e8f0;
+    color: #dbeafe;
 
     font-size: 19px;
 
     font-weight: 900;
 
     margin:
-        23px
-        0
-        11px
-        0;
+        24px 0 11px 0;
 }
 
 
@@ -807,47 +844,43 @@ header {
     background:
         linear-gradient(
             145deg,
-            #0c1828,
-            #091422
+            #0b192b,
+            #091522
         );
 
     border:
-        1px solid
-        #203754;
+        1px solid #294764;
 
-    border-radius: 17px;
+    border-radius: 16px;
 
-    padding: 14px;
+    padding: 13px;
 
     min-height: 0 !important;
 
     height: auto !important;
 
     box-shadow:
-        0 8px 25px
-        rgba(0,0,0,.22);
+        0 8px 22px rgba(0,0,0,.23);
 
     overflow: hidden;
 }
-
 
 .io-card-title {
 
     color: #dbeafe !important;
 
-    font-size: 15px;
+    font-size: 14px;
 
     font-weight: 900;
 
-    margin-bottom: 7px;
+    margin-bottom: 6px;
 }
-
 
 .io-description {
 
-    color: #94a3b8 !important;
+    color: #8195ad !important;
 
-    font-size: 11px;
+    font-size: 10px;
 
     font-weight: 600;
 
@@ -856,12 +889,12 @@ header {
 
 
 /* ============================================================
-   EMPTY MESSAGE
+   EMPTY
    ============================================================ */
 
 .empty-message {
 
-    min-height: 120px;
+    min-height: 115px;
 
     display: flex;
 
@@ -871,20 +904,19 @@ header {
 
     text-align: center;
 
-    color: #94a3b8 !important;
+    color: #8295aa !important;
 
     background:
-        #081321;
+        #091522;
 
     border:
-        1px dashed
-        #35516f;
+        1px dashed #31506e;
 
-    border-radius: 12px;
+    border-radius: 11px;
 
     padding: 15px;
 
-    font-size: 12px;
+    font-size: 11px;
 
     font-weight: 700;
 }
@@ -896,9 +928,8 @@ header {
 
 div[data-testid="stFileUploader"] {
 
-    color: #cbd5e1 !important;
+    color: #dbeafe !important;
 }
-
 
 div[data-testid="stFileUploader"] label {
 
@@ -907,15 +938,13 @@ div[data-testid="stFileUploader"] label {
     font-weight: 700 !important;
 }
 
-
 div[data-testid="stFileUploaderDropzone"] {
 
     background:
-        #081321 !important;
+        #091522 !important;
 
     border:
-        1px dashed
-        #35516f !important;
+        1px dashed #355472 !important;
 
     border-radius:
         11px !important;
@@ -924,150 +953,84 @@ div[data-testid="stFileUploaderDropzone"] {
         10px !important;
 }
 
-
 div[data-testid="stFileUploaderDropzoneInstructions"] {
 
-    color: #94a3b8 !important;
+    color: #9aadc2 !important;
 }
-
 
 div[data-testid="stFileUploaderDropzoneInstructions"] span {
 
-    color: #cbd5e1 !important;
+    color: #9aadc2 !important;
 }
-
 
 div[data-testid="stFileUploaderDropzoneInstructions"] small {
 
-    color: #64748b !important;
+    color: #71859c !important;
 }
-
 
 div[data-testid="stFileUploaderDropzone"] button {
 
     color: #ffffff !important;
 
     background:
-        #173b6c !important;
+        #173b60 !important;
 
-    border:
-        none !important;
+    border: none !important;
 }
 
 
 /* ============================================================
-   PREVIEW
+   IMAGE PREVIEW
    ============================================================ */
 
 .preview-box {
 
     background:
-        #081321;
+        #091522;
 
     border:
-        1px solid
-        #203754;
+        1px solid #294764;
 
-    border-radius: 12px;
+    border-radius:
+        12px;
 
-    padding: 7px;
+    padding:
+        7px;
 
-    text-align: center;
+    text-align:
+        center;
 
-    margin-top: 5px;
+    margin-top:
+        5px;
 }
-
 
 .preview-label {
 
-    color: #94a3b8 !important;
+    color:
+        #94a3b8 !important;
 
-    font-size: 11px;
-
-    font-weight: 700;
-
-    margin-bottom: 5px;
-}
-
-
-/* ============================================================
-   BUTTONS
-   ============================================================ */
-
-div.stButton > button {
-
-    width: 100%;
-
-    border-radius:
-        10px !important;
-
-    min-height:
-        42px;
+    font-size:
+        11px;
 
     font-weight:
-        800 !important;
+        700;
 
-    border:
-        1px solid
-        #294866 !important;
-
-    color:
-        #dbeafe !important;
-
-    background:
-        #0d1a2b !important;
-
-    transition:
-        all .2s ease;
-}
-
-
-div.stButton > button:hover {
-
-    border-color:
-        #3b82f6 !important;
-
-    color:
-        #ffffff !important;
-
-    background:
-        #10243d !important;
-
-    box-shadow:
-        0 5px 18px
-        rgba(59,130,246,.18);
-}
-
-
-.primary-btn div.stButton > button {
-
-    background:
-        linear-gradient(
-            135deg,
-            #16a34a,
-            #15803d
-        ) !important;
-
-    color:
-        #ffffff !important;
-
-    border:
-        none !important;
+    margin-bottom:
+        5px;
 }
 
 
 /* ============================================================
-   VISIBLE STATUS
+   STATUS MESSAGES
    ============================================================ */
 
 .success-visible {
 
     background:
-        rgba(22,163,74,.12) !important;
+        rgba(22,163,74,.13) !important;
 
     border:
-        1.5px solid
-        #22c55e !important;
+        1px solid #22c55e !important;
 
     border-radius:
         10px !important;
@@ -1082,21 +1045,19 @@ div.stButton > button:hover {
         #86efac !important;
 
     font-size:
-        12px !important;
+        11px !important;
 
     font-weight:
         800 !important;
 }
 
-
 .waiting-visible {
 
     background:
-        rgba(37,99,235,.10) !important;
+        #0a1828 !important;
 
     border:
-        1px solid
-        #294b75 !important;
+        1px solid #294764 !important;
 
     border-radius:
         10px !important;
@@ -1105,10 +1066,10 @@ div.stButton > button:hover {
         10px !important;
 
     color:
-        #93c5fd !important;
+        #8ea2b8 !important;
 
     font-size:
-        11px !important;
+        10px !important;
 
     font-weight:
         700 !important;
@@ -1125,30 +1086,28 @@ div.stButton > button:hover {
 .output-result {
 
     margin-top:
-        10px;
+        9px;
 
     background:
-        #081321;
+        #091522;
 
     border:
-        1px solid
-        #203754;
+        1px solid #294764;
 
     border-radius:
-        13px;
+        12px;
 
     padding:
         9px;
 }
 
-
 .output-result-title {
 
     color:
-        #dbeafe !important;
+        #cfe1f4 !important;
 
     font-size:
-        12px;
+        11px;
 
     font-weight:
         900;
@@ -1159,17 +1118,16 @@ div.stButton > button:hover {
 
 
 /* ============================================================
-   STATUS OVERFLOW
+   OVERFLOW
    ============================================================ */
 
 .status-overflow {
 
     background:
-        rgba(127,29,29,.18) !important;
+        rgba(127,29,29,.20) !important;
 
     border:
-        2px solid
-        #ef4444 !important;
+        2px solid #ef4444 !important;
 
     border-radius:
         12px;
@@ -1181,7 +1139,7 @@ div.stButton > button:hover {
         #fca5a5 !important;
 
     font-size:
-        11px;
+        10px;
 
     line-height:
         1.7;
@@ -1190,15 +1148,30 @@ div.stButton > button:hover {
         9px;
 }
 
+.status-title {
+
+    font-size:
+        13px;
+
+    font-weight:
+        900;
+
+    margin-bottom:
+        5px;
+}
+
+
+/* ============================================================
+   NORMAL
+   ============================================================ */
 
 .status-normal {
 
     background:
-        rgba(20,83,45,.18) !important;
+        rgba(20,83,45,.20) !important;
 
     border:
-        2px solid
-        #22c55e !important;
+        2px solid #22c55e !important;
 
     border-radius:
         12px;
@@ -1210,7 +1183,7 @@ div.stButton > button:hover {
         #86efac !important;
 
     font-size:
-        11px;
+        10px;
 
     line-height:
         1.7;
@@ -1220,14 +1193,17 @@ div.stButton > button:hover {
 }
 
 
+/* ============================================================
+   NO DETECTION
+   ============================================================ */
+
 .status-no-detection {
 
     background:
-        rgba(124,45,18,.18) !important;
+        rgba(124,45,18,.20) !important;
 
     border:
-        2px solid
-        #fb923c !important;
+        2px solid #fb923c !important;
 
     border-radius:
         12px;
@@ -1239,26 +1215,13 @@ div.stButton > button:hover {
         #fdba74 !important;
 
     font-size:
-        11px;
+        10px;
 
     font-weight:
         700;
 
     margin-top:
         9px;
-}
-
-
-.status-title {
-
-    font-size:
-        14px;
-
-    font-weight:
-        900;
-
-    margin-bottom:
-        5px;
 }
 
 
@@ -1269,11 +1232,10 @@ div.stButton > button:hover {
 .details-card {
 
     background:
-        #0b1626 !important;
+        #0a1726 !important;
 
     border:
-        1px solid
-        #203754 !important;
+        1px solid #294764 !important;
 
     border-radius:
         11px;
@@ -1285,14 +1247,13 @@ div.stButton > button:hover {
         9px;
 }
 
-
 .details-title {
 
     color:
-        #dbeafe !important;
+        #cfe1f4 !important;
 
     font-size:
-        12px;
+        11px;
 
     font-weight:
         900;
@@ -1301,23 +1262,20 @@ div.stButton > button:hover {
         5px;
 }
 
-
 .detail-row {
 
     color:
-        #94a3b8 !important;
+        #9aacc0 !important;
 
     font-size:
-        11px;
+        10px;
 
     padding:
         5px 0;
 
     border-bottom:
-        1px solid
-        #172a40;
+        1px solid #1c3047;
 }
-
 
 .detail-row:last-child {
 
@@ -1327,17 +1285,16 @@ div.stButton > button:hover {
 
 
 /* ============================================================
-   EMAIL SUCCESS
+   EMAIL
    ============================================================ */
 
 .email-success {
 
     background:
-        rgba(22,163,74,.12) !important;
+        rgba(20,83,45,.20) !important;
 
     border:
-        2px solid
-        #22c55e !important;
+        2px solid #22c55e !important;
 
     border-radius:
         11px;
@@ -1352,27 +1309,25 @@ div.stButton > button:hover {
         9px;
 }
 
-
 .email-success-title {
 
     color:
         #86efac !important;
 
     font-size:
-        12px;
+        11px;
 
     font-weight:
         900;
 }
 
-
 .email-success-text {
 
     color:
-        #4ade80 !important;
+        #6ee7b7 !important;
 
     font-size:
-        10px;
+        9px;
 
     font-weight:
         700;
@@ -1389,11 +1344,10 @@ div.stButton > button:hover {
 .video-result-box {
 
     background:
-        #081321;
+        #091522;
 
     border:
-        1px solid
-        #203754;
+        1px solid #294764;
 
     border-radius:
         12px;
@@ -1418,7 +1372,6 @@ div.stButton > button:hover {
     overflow:
         hidden;
 }
-
 
 [data-testid="stVideo"] {
 
@@ -1453,14 +1406,25 @@ div[data-testid="stCameraInput"] {
 
 
 /* ============================================================
-   STREAMLIT TEXT INPUT / SELECTED FILE
+   LINK BUTTON
    ============================================================ */
 
-.stFileUploader,
-.stTextInput,
-.stSelectbox {
+.stLinkButton a {
 
-    color: #e2e8f0;
+    background:
+        #102a45 !important;
+
+    color:
+        #bfdbfe !important;
+
+    border:
+        1px solid #315474 !important;
+
+    border-radius:
+        10px !important;
+
+    font-weight:
+        800 !important;
 }
 
 
@@ -1473,13 +1437,13 @@ div[data-testid="stCameraInput"] {
     .hero-card {
 
         min-height:
-            auto;
+            400px;
 
         padding:
-            30px 25px 25px 25px;
+            35px 25px 25px 25px;
     }
 
-    .hero-career-new {
+    .hero-career {
 
         font-size:
             27px;
@@ -1487,62 +1451,50 @@ div[data-testid="stCameraInput"] {
 
     .hero-project-area {
 
-        margin-top:
-            35px;
-    }
+        left:
+            25px;
 
-    .description-card {
+        right:
+            25px;
 
-        margin-top:
-            12px;
+        grid-template-columns:
+            1fr 95px;
 
-        min-height:
-            auto;
-    }
-}
-
-
-@media (max-width: 600px) {
-
-    .hero-project-area {
-
-        align-items:
-            flex-start;
+        column-gap:
+            10px;
     }
 
     .hero-logo-container {
 
         width:
-            82px;
+            90px;
 
         height:
-            82px;
+            90px;
     }
 
-    .hero-logo-inside {
-
-        width:
-            76px;
-
-        height:
-            76px;
-    }
-
-    .hero-project-name-new {
+    .hero-project-name {
 
         font-size:
-            21px;
+            18px;
     }
 
-    .hero-project-subtitle-new {
+    .description-card {
 
-        font-size:
+        min-height:
+            auto;
+    }
+
+    .io-card {
+
+        margin-bottom:
             10px;
     }
 }
 
 </style>
-"""
+""",
+    unsafe_allow_html=True
 )
 
 
@@ -1550,30 +1502,12 @@ div[data-testid="stCameraInput"] {
 # HELPERS
 # ============================================================
 
-def get_logo_base64():
+def get_logo_path():
 
-    logo_path = os.path.join(
+    return os.path.join(
         os.path.dirname(__file__),
         "logo.png"
     )
-
-    if not os.path.exists(logo_path):
-        return None
-
-    try:
-
-        with open(
-            logo_path,
-            "rb"
-        ) as f:
-
-            return base64.b64encode(
-                f.read()
-            ).decode()
-
-    except Exception:
-
-        return None
 
 
 # ============================================================
@@ -1602,10 +1536,7 @@ def load_model():
 # ============================================================
 
 @st.cache_data(ttl=300)
-def reverse_geocode(
-    latitude,
-    longitude
-):
+def reverse_geocode(latitude, longitude):
 
     try:
 
@@ -1623,7 +1554,7 @@ def reverse_geocode(
 
             headers={
                 "User-Agent":
-                    "EcoBin-AI-Garbage-Overflow-Detection/1.0"
+                "EcoBin-AI-Garbage-Overflow-Detection/1.0"
             },
 
             timeout=10
@@ -1768,11 +1699,7 @@ def get_map_url():
 
     longitude = st.session_state.live_longitude
 
-    if (
-        latitude is None
-        or longitude is None
-    ):
-
+    if latitude is None or longitude is None:
         return None
 
     return (
@@ -1796,14 +1723,15 @@ def get_current_time():
 
 def display_live_location():
 
-    render_html(
-    """
-    <div class="location-card">
+    st.markdown(
+        """
+<div class="location-card">
 
-    <div class="location-heading">
-    📍 Live Location
-    </div>
-    """
+<div class="location-heading">
+📍 Live Location
+</div>
+""",
+        unsafe_allow_html=True
     )
 
     get_live_location()
@@ -1834,33 +1762,34 @@ def display_live_location():
                     accuracy
                 )
 
-        render_html(
-        f"""
-        <div class="location-line">
+        st.markdown(
+            f"""
+<div class="location-line">
 
-        <b>Current Area:</b>
-        {area}
-        <br>
+<b>Current Area:</b>
+{area}
+<br>
 
-        <b>Latitude:</b>
-        {latitude:.6f}
-        &nbsp;&nbsp;
+<b>Latitude:</b>
+{latitude:.6f}
+&nbsp;&nbsp;
 
-        <b>Longitude:</b>
-        {longitude:.6f}
+<b>Longitude:</b>
+{longitude:.6f}
 
-        <br>
+<br>
 
-        <b>GPS Accuracy:</b>
-        {accuracy_text}
+<b>GPS Accuracy:</b>
+{accuracy_text}
 
-        <br>
+<br>
 
-        <b>Location Time:</b>
-        {get_current_time()}
+<b>Location Time:</b>
+{get_current_time()}
 
-        </div>
-        """
+</div>
+""",
+            unsafe_allow_html=True
         )
 
         map_url = get_map_url()
@@ -1875,18 +1804,18 @@ def display_live_location():
 
     else:
 
-        render_html(
-        """
-        <div class="location-line">
-        📍 Allow browser location permission to load your live area.
-        </div>
-        """
+        st.markdown(
+            """
+<div class="location-line">
+📍 Allow browser location permission to load your live area.
+</div>
+""",
+            unsafe_allow_html=True
         )
 
-    render_html(
-        """
-        </div>
-        """
+    st.markdown(
+        "</div>",
+        unsafe_allow_html=True
     )
 
 
@@ -1974,7 +1903,7 @@ This alert was automatically generated by EcoBin AI.
 
 
 # ============================================================
-# ALERT COOLDOWN
+# 5 MINUTE ALERT COOLDOWN
 # ============================================================
 
 def generate_alert():
@@ -1987,7 +1916,8 @@ def generate_alert():
         st.session_state.last_alert_time
     )
 
-    # 5 MINUTE COOLDOWN
+    # 5 MINUTES = 300 SECONDS
+
     if previous is not None:
 
         difference = (
@@ -1995,26 +1925,28 @@ def generate_alert():
         ).total_seconds()
 
         if difference < 300:
+
             return
 
     if send_email_alert():
 
         st.session_state.last_alert_time = current_dt
 
-        render_html(
-        """
-        <div class="email-success">
+        st.markdown(
+            """
+<div class="email-success">
 
-        <div class="email-success-title">
-        📧 ALERT EMAIL SENT SUCCESSFULLY
-        </div>
+<div class="email-success-title">
+📧 ALERT EMAIL SENT SUCCESSFULLY
+</div>
 
-        <div class="email-success-text">
-        Garbage overflow alert sent to the configured email address.
-        </div>
+<div class="email-success-text">
+Garbage overflow alert sent to the configured email address.
+</div>
 
-        </div>
-        """
+</div>
+""",
+            unsafe_allow_html=True
         )
 
 
@@ -2068,9 +2000,7 @@ def extract_detections(result):
 # FINAL PREDICTION
 # ============================================================
 
-def get_final_prediction(
-    detections
-):
+def get_final_prediction(detections):
 
     overflow_detections = [
 
@@ -2133,10 +2063,7 @@ def get_final_prediction(
 # IMAGE PREDICTION
 # ============================================================
 
-def predict_image(
-    image,
-    model
-):
+def predict_image(image, model):
 
     image_np = np.array(
         image
@@ -2154,14 +2081,11 @@ def predict_image(
         result
     )
 
-    return (
-        result,
-        detections
-    )
+    return result, detections
 
 
 # ============================================================
-# SAFE IMAGE DISPLAY
+# DISPLAY RESULT IMAGE
 # ============================================================
 
 def display_result_image(result):
@@ -2210,14 +2134,15 @@ def show_output_result(
     title="AI Prediction"
 ):
 
-    render_html(
-    f"""
-    <div class="output-result">
+    st.markdown(
+        f"""
+<div class="output-result">
 
-    <div class="output-result-title">
-    🎯 {title}
-    </div>
-    """
+<div class="output-result-title">
+🎯 {title}
+</div>
+""",
+        unsafe_allow_html=True
     )
 
     display_result_image(
@@ -2230,127 +2155,131 @@ def show_output_result(
 
     if status == "GARBAGE OVERFLOW":
 
-        render_html(
-        f"""
-        <div class="status-overflow">
+        st.markdown(
+            f"""
+<div class="status-overflow">
 
-        <div class="status-title">
-        🚨 Garbage Overflow Detected
-        </div>
+<div class="status-title">
+🚨 Garbage Overflow Detected
+</div>
 
-        <b>Detection:</b>
-        Overflow
-        <br>
+<b>Detection:</b>
+Overflow
+<br>
 
-        <b>Confidence:</b>
-        {confidence * 100:.2f}%
-        <br>
+<b>Confidence:</b>
+{confidence * 100:.2f}%
+<br>
 
-        <b>Location:</b>
-        {get_location().replace(chr(10), " | ")}
-        <br>
+<b>Location:</b>
+{get_location().replace(chr(10), " | ")}
+<br>
 
-        <b>Date & Time:</b>
-        {get_current_time()}
-        <br>
+<b>Date & Time:</b>
+{get_current_time()}
+<br>
 
-        <b>Status:</b>
-        Violation Detected
+<b>Status:</b>
+Violation Detected
 
-        </div>
-        """
+</div>
+""",
+            unsafe_allow_html=True
         )
 
+        # 5-MINUTE COOLDOWN
         generate_alert()
 
     elif status == "NORMAL":
 
-        render_html(
-        f"""
-        <div class="status-normal">
+        st.markdown(
+            f"""
+<div class="status-normal">
 
-        <div class="status-title">
-        ✅ No Garbage Overflow Detected
-        </div>
+<div class="status-title">
+✅ No Garbage Overflow Detected
+</div>
 
-        <b>Detection:</b>
-        Normal
-        <br>
+<b>Detection:</b>
+Normal
+<br>
 
-        <b>Confidence:</b>
-        {confidence * 100:.2f}%
-        <br>
+<b>Confidence:</b>
+{confidence * 100:.2f}%
+<br>
 
-        <b>Location:</b>
-        {get_location().replace(chr(10), " | ")}
-        <br>
+<b>Location:</b>
+{get_location().replace(chr(10), " | ")}
+<br>
 
-        <b>Date & Time:</b>
-        {get_current_time()}
-        <br>
+<b>Date & Time:</b>
+{get_current_time()}
+<br>
 
-        <b>Status:</b>
-        Normal
+<b>Status:</b>
+Normal
 
-        </div>
-        """
+</div>
+""",
+            unsafe_allow_html=True
         )
 
     else:
 
-        render_html(
-        """
-        <div class="status-no-detection">
+        st.markdown(
+            """
+<div class="status-no-detection">
 
-        ⚠️ No clear garbage condition detected.
-        <br>
-        Please try another image.
+⚠️ No clear garbage condition detected.
+<br>
+Please try another image.
 
-        </div>
-        """
+</div>
+""",
+            unsafe_allow_html=True
         )
 
     if detections:
 
-        render_html(
-        """
-        <div class="details-card">
+        st.markdown(
+            """
+<div class="details-card">
 
-        <div class="details-title">
-        📊 Detection Details
-        </div>
-        """
+<div class="details-title">
+📊 Detection Details
+</div>
+""",
+            unsafe_allow_html=True
         )
 
         for detection in detections:
 
-            render_html(
-            f"""
-            <div class="detail-row">
+            st.markdown(
+                f"""
+<div class="detail-row">
 
-            <b>
-            {detection["class"].title()}
-            </b>
+<b>
+{detection["class"].title()}
+</b>
 
-            &nbsp; — &nbsp;
+&nbsp; — &nbsp;
 
-            {detection["confidence"] * 100:.2f}%
-            confidence
+{detection["confidence"] * 100:.2f}%
+confidence
 
-            </div>
-            """
+</div>
+""",
+                unsafe_allow_html=True
             )
 
-        render_html(
-        """
-        </div>
-        """
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
         )
 
-    render_html(
-    """
-    </div>
-    """
+    st.markdown(
+        "</div>",
+        unsafe_allow_html=True
     )
 
 
@@ -2430,9 +2359,7 @@ def process_video(
     frame_number = 0
 
     overflow_count = 0
-
     normal_count = 0
-
     detection_count = 0
 
     best_overflow_confidence = 0.0
@@ -2501,7 +2428,7 @@ def process_video(
             annotated_frame,
             (10, 10),
             (560, 72),
-            (10, 25, 45),
+            (15, 35, 60),
             -1
         )
 
@@ -2551,7 +2478,7 @@ def process_video(
     progress.empty()
 
     # ========================================================
-    # FFMPEG CONVERSION
+    # FFMPEG
     # ========================================================
 
     try:
@@ -2619,8 +2546,6 @@ def process_video(
 
         output_video_bytes = None
 
-    # CLEAN TEMP FILES
-
     for path in [
         raw_output_path,
         h264_output_path
@@ -2634,8 +2559,6 @@ def process_video(
 
         except Exception:
             pass
-
-    # FINAL RESULT
 
     if detection_count == 0:
 
@@ -2666,12 +2589,13 @@ def process_video(
 
 def empty_box(message):
 
-    render_html(
-    f"""
-    <div class="empty-message">
-    {message}
-    </div>
-    """
+    st.markdown(
+        f"""
+<div class="empty-message">
+{message}
+</div>
+""",
+        unsafe_allow_html=True
     )
 
 
@@ -2680,23 +2604,25 @@ def section_title(
     title
 ):
 
-    render_html(
-    f"""
-    <div class="mode-title">
-    {icon} {title}
-    </div>
-    """
+    st.markdown(
+        f"""
+<div class="mode-title">
+{icon} {title}
+</div>
+""",
+        unsafe_allow_html=True
     )
 
 
 def visible_success(message):
 
-    render_html(
-    f"""
-    <div class="success-visible">
-    ✅ {message}
-    </div>
-    """
+    st.markdown(
+        f"""
+<div class="success-visible">
+✅ {message}
+</div>
+""",
+        unsafe_allow_html=True
     )
 
 
@@ -2706,20 +2632,18 @@ def visible_success(message):
 
 if st.session_state.page == "home":
 
-    # ========================================================
-    # HERO TITLE
-    # ========================================================
+    st.markdown(
+        '<div class="hero-title">♻️ EcoBin AI</div>',
+        unsafe_allow_html=True
+    )
 
-    render_html(
-    """
-    <div class="hero-title">
-    ♻️ EcoBin AI
-    </div>
-
-    <div class="hero-subtitle">
-    Smart Garbage Overflow Detection using Artificial Intelligence
-    </div>
-    """
+    st.markdown(
+        """
+<div class="hero-subtitle">
+Smart Garbage Overflow Detection using Artificial Intelligence
+</div>
+""",
+        unsafe_allow_html=True
     )
 
     hero_left, hero_right = st.columns(
@@ -2727,137 +2651,168 @@ if st.session_state.page == "home":
         gap="large"
     )
 
+
     # ========================================================
-    # HERO LEFT
+    # LEFT HERO CARD
     # ========================================================
 
     with hero_left:
 
-        logo_base64 = get_logo_base64()
+        logo_path = get_logo_path()
 
-        if logo_base64:
+        # ----------------------------------------------------
+        # SAFE LOGO
+        # ----------------------------------------------------
+        # IMPORTANT:
+        # Logo is embedded INSIDE the card.
+        # No separate logo is displayed below the card.
+        #
+        # We use a proper <img> tag only when logo exists.
+        # ----------------------------------------------------
 
-            logo_html = f"""
-            <img
-                src="data:image/png;base64,{logo_base64}"
-                class="hero-logo-inside"
-            />
-            """
+        logo_html = ""
+
+        if os.path.exists(logo_path):
+
+            import base64
+
+            try:
+
+                with open(
+                    logo_path,
+                    "rb"
+                ) as image_file:
+
+                    logo_base64 = base64.b64encode(
+                        image_file.read()
+                    ).decode("utf-8")
+
+                logo_html = (
+                    '<img '
+                    'src="data:image/png;base64,'
+                    + logo_base64
+                    + '" '
+                    'alt="EcoBin AI Logo">'
+                )
+
+            except Exception:
+
+                logo_html = ""
 
         else:
 
-            logo_html = """
-            <div
-                style="
-                color:#94a3b8;
-                font-size:11px;
-                text-align:center;
-                "
-            >
-            Logo not found
-            </div>
-            """
-
-        render_html(
-        f"""
-        <div class="hero-card">
-
-        <div class="hero-top-content">
-
-        <div class="program-pill">
-        🎓 AICW PROGRAM
-        </div>
-
-        <div class="hero-career-new">
-        👩🏻‍💻 AI Career for Women
-        </div>
-
-        <div class="hero-capstone-new">
-        Capstone Project
-        </div>
-
-        </div>
+            logo_html = (
+                '<div style="'
+                'color:#64748b;'
+                'font-size:11px;'
+                'text-align:center;'
+                '">Logo</div>'
+            )
 
 
-        <div class="hero-project-area">
+        # ----------------------------------------------------
+        # HERO CARD
+        # ----------------------------------------------------
 
-        <div class="hero-project-info">
+        st.markdown(
+            f"""
+<div class="hero-card">
 
-        <div class="hero-project-name-new">
-        ♻️ EcoBin-AI
-        </div>
+<div class="hero-content">
 
-        <div class="hero-project-subtitle-new">
-        📧 Intelligent Safety • Real-Time Detection
-        </div>
+<div class="program-pill">
+🎓 AICW PROGRAM
+</div>
 
-        </div>
+<div class="hero-career">
+👩🏻‍💻 AI Career for Women
+</div>
+
+<div class="hero-capstone">
+Capstone Project
+</div>
+
+</div>
 
 
-        <div class="hero-logo-container">
-        {logo_html}
-        </div>
+<div class="hero-project-area">
 
-        </div>
+<div class="hero-project-info">
 
-        </div>
-        """
+<div class="hero-project-name">
+♻️ EcoBin-AI
+</div>
+
+<div class="hero-project-subtitle">
+📧 Intelligent Safety • Real-Time Detection
+</div>
+
+</div>
+
+
+<div class="hero-logo-container">
+{logo_html}
+</div>
+
+
+</div>
+
+</div>
+""",
+            unsafe_allow_html=True
         )
 
 
     # ========================================================
-    # HERO RIGHT
+    # RIGHT DESCRIPTION
     # ========================================================
 
     with hero_right:
 
-        render_html(
-        """
-        <div class="description-card">
+        st.markdown(
+            """
+<div class="description-card">
 
-        <div class="description-heading">
-        🌱 Project Description
-        </div>
+<div class="description-heading">
+🌱 Project Description
+</div>
 
-        <p>
-        EcoBin AI is an AI-powered Smart Garbage Overflow Detection System
-        designed to automatically identify overflowing garbage bins using
-        computer vision and YOLOv8 object detection.
-        </p>
+<p>
+EcoBin AI is an AI-powered Smart Garbage Overflow Detection System
+designed to automatically identify overflowing garbage bins using
+computer vision and YOLOv8 object detection.
+</p>
 
-        <p>
-        The system analyzes images, camera-captured photos, and CCTV/video
-        files to identify garbage overflow conditions.
-        </p>
+<p>
+The system analyzes images, camera-captured photos, and CCTV/video
+files to identify garbage overflow conditions.
+</p>
 
-        <p>
-        The trained YOLOv8 model classifies the detected garbage condition
-        into two classes: <b>Normal</b> and <b>Overflow</b>.
-        </p>
+<p>
+The trained YOLOv8 model classifies the detected garbage condition
+into two classes: <b>Normal</b> and <b>Overflow</b>.
+</p>
 
-        <p>
-        When an overflow condition is detected, EcoBin AI automatically
-        generates an alert containing the live location, date and time,
-        and violation status. The alert is also sent to the configured
-        user's email address.
-        </p>
+<p>
+When an overflow condition is detected, EcoBin AI automatically
+generates an alert containing the live location, date and time,
+and violation status. The alert is also sent to the configured
+user's email address.
+</p>
 
-        </div>
-        """
+</div>
+""",
+            unsafe_allow_html=True
         )
 
 
     # ========================================================
     # SYSTEM CAPABILITIES
     # ========================================================
-    # NO EXTRA SPACER HERE
 
-    render_html(
-    """
-    <div class="section-title">
-    ⚡ System Capabilities
-    </div>
-    """
+    st.markdown(
+        '<div class="section-title">⚡ System Capabilities</div>',
+        unsafe_allow_html=True
     )
 
     caps = [
@@ -2903,24 +2858,25 @@ if st.session_state.page == "home":
 
         with col:
 
-            render_html(
-            f"""
-            <div class="capability-card">
+            st.markdown(
+                f"""
+<div class="capability-card">
 
-            <div class="capability-icon">
-            {icon}
-            </div>
+<div class="capability-icon">
+{icon}
+</div>
 
-            <div class="capability-title">
-            {title}
-            </div>
+<div class="capability-title">
+{title}
+</div>
 
-            <div class="capability-text">
-            {text}
-            </div>
+<div class="capability-text">
+{text}
+</div>
 
-            </div>
-            """
+</div>
+""",
+                unsafe_allow_html=True
             )
 
 
@@ -2928,16 +2884,14 @@ if st.session_state.page == "home":
     # START BUTTON
     # ========================================================
 
-    render_html(
-    """
-    <div style="height:12px;"></div>
-    """
+    st.markdown(
+        '<div style="height:12px"></div>',
+        unsafe_allow_html=True
     )
 
-    render_html(
-    """
-    <div class="primary-btn">
-    """
+    st.markdown(
+        '<div class="primary-btn">',
+        unsafe_allow_html=True
     )
 
     if st.button(
@@ -2950,10 +2904,9 @@ if st.session_state.page == "home":
 
         st.rerun()
 
-    render_html(
-    """
-    </div>
-    """
+    st.markdown(
+        "</div>",
+        unsafe_allow_html=True
     )
 
 
@@ -2961,12 +2914,9 @@ if st.session_state.page == "home":
     # TEAM
     # ========================================================
 
-    render_html(
-    """
-    <div class="section-title">
-    👥 Project Team
-    </div>
-    """
+    st.markdown(
+        '<div class="section-title">👥 Project Team</div>',
+        unsafe_allow_html=True
     )
 
     team_col, mail_col, guide_col = st.columns(
@@ -2974,112 +2924,103 @@ if st.session_state.page == "home":
         gap="medium"
     )
 
-
-    # TEAM MEMBERS
-
     with team_col:
 
-        render_html(
-        """
-        <div class="team-card">
+        st.markdown(
+            """
+<div class="team-card">
 
-        <div class="team-heading">
-        TEAM MEMBERS
-        </div>
+<div class="team-heading">
+TEAM MEMBERS
+</div>
 
-        <div class="team-text">
+<div class="team-text">
 
-        1. K.Lalitha Devi<br>
-        2. Y.Haasini<br>
-        3. G.Sri Divya<br>
-        4. N.Sushma sri
+1. K.Lalitha Devi<br>
+2. Y.Haasini<br>
+3. G.Sri Divya<br>
+4. N.Sushma sri
 
-        </div>
+</div>
 
-        </div>
-        """
+</div>
+""",
+            unsafe_allow_html=True
         )
-
-
-    # GMAIL
 
     with mail_col:
 
-        render_html(
-        """
-        <div class="team-card">
+        st.markdown(
+            """
+<div class="team-card">
 
-        <div class="team-heading">
-        GMAIL
-        </div>
+<div class="team-heading">
+GMAIL
+</div>
 
-        <div class="team-text">
+<div class="team-text">
 
-        <a href="mailto:lalithadevi825@gmail.com">
-        lalithadevi825@gmail.com
-        </a>
-        <br>
+<a href="mailto:lalithadevi825@gmail.com">
+lalithadevi825@gmail.com
+</a>
+<br>
 
-        <a href="mailto:haasiniyanamadala@gmail.com">
-        haasiniyanamadala@gmail.com
-        </a>
-        <br>
+<a href="mailto:haasiniyanamadala@gmail.com">
+haasiniyanamadala@gmail.com
+</a>
+<br>
 
-        <a href="mailto:galidivya534@gmail.com">
-        galidivya534@gmail.com
-        </a>
-        <br>
+<a href="mailto:galidivya534@gmail.com">
+galidivya534@gmail.com
+</a>
+<br>
 
-        <a href="mailto:nadimpallisushmasri29@gmail.com">
-        nadimpallisushmasri29@gmail.com
-        </a>
+<a href="mailto:nadimpallisushmasri29@gmail.com">
+nadimpallisushmasri29@gmail.com
+</a>
 
-        </div>
+</div>
 
-        </div>
-        """
+</div>
+""",
+            unsafe_allow_html=True
         )
-
-
-    # GUIDE
 
     with guide_col:
 
-        render_html(
-        """
-        <div class="team-card">
+        st.markdown(
+            """
+<div class="team-card">
 
-        <div class="team-heading">
-        GUIDE NAME
-        </div>
+<div class="team-heading">
+GUIDE NAME
+</div>
 
-        <div class="team-text">
+<div class="team-text">
 
-        <b>
-        MD. Abdul Aziz
-        </b>
+<b>
+MD. Abdul Aziz
+</b>
 
-        <br><br>
+<br><br>
 
-        Trainer, Co-Lead-AICW
+Trainer, Co-Lead-AICW
 
-        </div>
+</div>
 
-        </div>
-        """
+</div>
+""",
+            unsafe_allow_html=True
         )
 
 
-    # ========================================================
-    # FOOTER
-    # ========================================================
-
-    render_html(
-    """
-    <div class="footer-text">
-    EcoBin AI • Smart Garbage Overflow Detection
-    </div>
-    """
+    st.markdown(
+        """
+<div class="footer-text">
+EcoBin AI • Smart Garbage Overflow Detection
+</div>
+""",
+        unsafe_allow_html=True
     )
 
 
@@ -3111,20 +3052,21 @@ else:
 
     with top_right:
 
-        render_html(
-        """
-        <div class="page-header">
+        st.markdown(
+            """
+<div class="page-header">
 
-        <div class="page-header-title">
-        ♻️ EcoBin AI Overflow Detection
-        </div>
+<div class="page-header-title">
+♻️ EcoBin AI Overflow Detection
+</div>
 
-        <div class="page-header-sub">
-        AI-powered image, camera and CCTV garbage overflow analysis
-        </div>
+<div class="page-header-sub">
+AI-powered image, camera and CCTV garbage overflow analysis
+</div>
 
-        </div>
-        """
+</div>
+""",
+            unsafe_allow_html=True
         )
 
 
@@ -3173,37 +3115,35 @@ else:
     input_image = None
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # IMAGE UPLOAD
-    # ========================================================
+    # --------------------------------------------------------
 
     with image_upload_col:
 
-        render_html(
-        """
-        <div class="io-card">
+        st.markdown(
+            """
+<div class="io-card">
 
-        <div class="io-card-title">
-        📤 Upload
-        </div>
+<div class="io-card-title">
+📤 Upload
+</div>
 
-        <div class="io-description">
-        Upload a garbage image for AI analysis
-        </div>
-        """
+<div class="io-description">
+Upload a garbage image for AI analysis
+</div>
+""",
+            unsafe_allow_html=True
         )
 
         uploaded_image = st.file_uploader(
             "Choose image",
-
             type=[
                 "jpg",
                 "jpeg",
                 "png"
             ],
-
             key="image_upload",
-
             label_visibility="collapsed"
         )
 
@@ -3215,39 +3155,40 @@ else:
 
         else:
 
-            render_html(
-            """
-            <div class="waiting-visible">
-            📤 Select an image to start detection
-            </div>
-            """
+            st.markdown(
+                """
+<div class="waiting-visible">
+📤 Select an image to start detection
+</div>
+""",
+                unsafe_allow_html=True
             )
 
-        render_html(
-        """
-        </div>
-        """
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
         )
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # IMAGE INPUT
-    # ========================================================
+    # --------------------------------------------------------
 
     with image_input_col:
 
-        render_html(
-        """
-        <div class="io-card">
+        st.markdown(
+            """
+<div class="io-card">
 
-        <div class="io-card-title">
-        🖼️ Input
-        </div>
+<div class="io-card-title">
+🖼️ Input
+</div>
 
-        <div class="io-description">
-        Selected image preview
-        </div>
-        """
+<div class="io-description">
+Selected image preview
+</div>
+""",
+            unsafe_allow_html=True
         )
 
         if uploaded_image:
@@ -3275,37 +3216,34 @@ else:
                 "Your selected image will appear here."
             )
 
-        render_html(
-        """
-        </div>
-        """
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
         )
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # IMAGE OUTPUT
-    # ========================================================
+    # --------------------------------------------------------
 
     with image_output_col:
 
-        render_html(
-        """
-        <div class="io-card">
+        st.markdown(
+            """
+<div class="io-card">
 
-        <div class="io-card-title">
-        🎯 Output
-        </div>
+<div class="io-card-title">
+🎯 Output
+</div>
 
-        <div class="io-description">
-        AI detection result
-        </div>
-        """
+<div class="io-description">
+AI detection result
+</div>
+""",
+            unsafe_allow_html=True
         )
 
-        if (
-            uploaded_image
-            and input_image is not None
-        ):
+        if uploaded_image and input_image is not None:
 
             if st.button(
                 "🔍  Detect Image",
@@ -3349,12 +3287,13 @@ else:
 
             else:
 
-                render_html(
-                """
-                <div class="waiting-visible">
-                🔍 Click "Detect Image" to generate AI output
-                </div>
-                """
+                st.markdown(
+                    """
+<div class="waiting-visible">
+🔍 Click "Detect Image" to generate AI output
+</div>
+""",
+                    unsafe_allow_html=True
                 )
 
         else:
@@ -3363,10 +3302,9 @@ else:
                 "AI prediction output will appear here."
             )
 
-        render_html(
-        """
-        </div>
-        """
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
         )
 
 
@@ -3387,24 +3325,25 @@ else:
     camera_pil = None
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # CAMERA
-    # ========================================================
+    # --------------------------------------------------------
 
     with camera_col:
 
-        render_html(
-        """
-        <div class="io-card">
+        st.markdown(
+            """
+<div class="io-card">
 
-        <div class="io-card-title">
-        📷 Camera
-        </div>
+<div class="io-card-title">
+📷 Camera
+</div>
 
-        <div class="io-description">
-        Capture a garbage-bin image
-        </div>
-        """
+<div class="io-description">
+Capture a garbage-bin image
+</div>
+""",
+            unsafe_allow_html=True
         )
 
         camera_image = st.camera_input(
@@ -3415,39 +3354,40 @@ else:
 
         if not camera_image:
 
-            render_html(
-            """
-            <div class="waiting-visible">
-            📷 Camera preview will appear here
-            </div>
-            """
+            st.markdown(
+                """
+<div class="waiting-visible">
+📷 Camera preview will appear here
+</div>
+""",
+                unsafe_allow_html=True
             )
 
-        render_html(
-        """
-        </div>
-        """
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
         )
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # CAMERA INPUT
-    # ========================================================
+    # --------------------------------------------------------
 
     with camera_input_col:
 
-        render_html(
-        """
-        <div class="io-card">
+        st.markdown(
+            """
+<div class="io-card">
 
-        <div class="io-card-title">
-        🖼️ Input
-        </div>
+<div class="io-card-title">
+🖼️ Input
+</div>
 
-        <div class="io-description">
-        Captured image preview
-        </div>
-        """
+<div class="io-description">
+Captured image preview
+</div>
+""",
+            unsafe_allow_html=True
         )
 
         if camera_image:
@@ -3475,37 +3415,34 @@ else:
                 "Captured camera image will appear here."
             )
 
-        render_html(
-        """
-        </div>
-        """
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
         )
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # CAMERA OUTPUT
-    # ========================================================
+    # --------------------------------------------------------
 
     with camera_output_col:
 
-        render_html(
-        """
-        <div class="io-card">
+        st.markdown(
+            """
+<div class="io-card">
 
-        <div class="io-card-title">
-        🎯 Output
-        </div>
+<div class="io-card-title">
+🎯 Output
+</div>
 
-        <div class="io-description">
-        AI camera detection result
-        </div>
-        """
+<div class="io-description">
+AI camera detection result
+</div>
+""",
+            unsafe_allow_html=True
         )
 
-        if (
-            camera_image
-            and camera_pil is not None
-        ):
+        if camera_image and camera_pil is not None:
 
             if st.button(
                 "🔍  Detect Camera Image",
@@ -3549,12 +3486,13 @@ else:
 
             else:
 
-                render_html(
-                """
-                <div class="waiting-visible">
-                🔍 Click "Detect Camera Image" to generate AI output
-                </div>
-                """
+                st.markdown(
+                    """
+<div class="waiting-visible">
+🔍 Click "Detect Camera Image" to generate AI output
+</div>
+""",
+                    unsafe_allow_html=True
                 )
 
         else:
@@ -3563,10 +3501,9 @@ else:
                 "Camera prediction output will appear here."
             )
 
-        render_html(
-        """
-        </div>
-        """
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
         )
 
 
@@ -3585,29 +3522,29 @@ else:
     )
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # VIDEO UPLOAD
-    # ========================================================
+    # --------------------------------------------------------
 
     with video_upload_col:
 
-        render_html(
-        """
-        <div class="io-card">
+        st.markdown(
+            """
+<div class="io-card">
 
-        <div class="io-card-title">
-        📤 Upload Video
-        </div>
+<div class="io-card-title">
+📤 Upload Video
+</div>
 
-        <div class="io-description">
-        Upload CCTV/video footage
-        </div>
-        """
+<div class="io-description">
+Upload CCTV/video footage
+</div>
+""",
+            unsafe_allow_html=True
         )
 
         uploaded_video = st.file_uploader(
             "Choose CCTV video",
-
             type=[
                 "mp4",
                 "avi",
@@ -3615,9 +3552,7 @@ else:
                 "mkv",
                 "mpeg"
             ],
-
             key="video_upload",
-
             label_visibility="collapsed"
         )
 
@@ -3629,39 +3564,40 @@ else:
 
         else:
 
-            render_html(
-            """
-            <div class="waiting-visible">
-            🎥 Select a CCTV video to analyze
-            </div>
-            """
+            st.markdown(
+                """
+<div class="waiting-visible">
+🎥 Select a CCTV video to analyze
+</div>
+""",
+                unsafe_allow_html=True
             )
 
-        render_html(
-        """
-        </div>
-        """
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
         )
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # VIDEO INPUT
-    # ========================================================
+    # --------------------------------------------------------
 
     with video_input_col:
 
-        render_html(
-        """
-        <div class="io-card">
+        st.markdown(
+            """
+<div class="io-card">
 
-        <div class="io-card-title">
-        🎬 Input
-        </div>
+<div class="io-card-title">
+🎬 Input
+</div>
 
-        <div class="io-description">
-        Uploaded CCTV video preview
-        </div>
-        """
+<div class="io-description">
+Uploaded CCTV video preview
+</div>
+""",
+            unsafe_allow_html=True
         )
 
         if uploaded_video:
@@ -3676,31 +3612,31 @@ else:
                 "Uploaded CCTV/video will appear here."
             )
 
-        render_html(
-        """
-        </div>
-        """
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
         )
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # VIDEO OUTPUT
-    # ========================================================
+    # --------------------------------------------------------
 
     with video_output_col:
 
-        render_html(
-        """
-        <div class="io-card">
+        st.markdown(
+            """
+<div class="io-card">
 
-        <div class="io-card-title">
-        🎯 Output
-        </div>
+<div class="io-card-title">
+🎯 Output
+</div>
 
-        <div class="io-description">
-        AI processed video result
-        </div>
-        """
+<div class="io-description">
+AI processed video result
+</div>
+""",
+            unsafe_allow_html=True
         )
 
         if uploaded_video:
@@ -3754,9 +3690,9 @@ else:
                         )
 
 
-            # =================================================
+            # ------------------------------------------------
             # VIDEO RESULT
-            # =================================================
+            # ------------------------------------------------
 
             if st.session_state.video_result is not None:
 
@@ -3768,20 +3704,20 @@ else:
 
                 if output_video_bytes is not None:
 
-                    render_html(
-                    """
-                    <div class="video-result-box">
-                    """
+                    st.markdown(
+                        """
+<div class="video-result-box">
+""",
+                        unsafe_allow_html=True
                     )
 
                     st.video(
                         output_video_bytes
                     )
 
-                    render_html(
-                    """
-                    </div>
-                    """
+                    st.markdown(
+                        "</div>",
+                        unsafe_allow_html=True
                     )
 
                 else:
@@ -3795,78 +3731,86 @@ else:
 
                 if video_status == "GARBAGE OVERFLOW":
 
-                    render_html(
-                    f"""
-                    <div class="status-overflow">
+                    st.markdown(
+                        f"""
+<div class="status-overflow">
 
-                    <div class="status-title">
-                    🚨 Garbage Overflow Detected
-                    </div>
+<div class="status-title">
+🚨 Garbage Overflow Detected
+</div>
 
-                    <b>Detection:</b>
-                    Overflow
-                    <br>
+<b>Detection:</b>
+Overflow
+<br>
 
-                    <b>Best Confidence:</b>
-                    {video_conf * 100:.2f}%
-                    <br>
+<b>Best Confidence:</b>
+{video_conf * 100:.2f}%
+<br>
 
-                    <b>Location:</b>
-                    {get_location().replace(chr(10), " | ")}
-                    <br>
+<b>Location:</b>
+{get_location().replace(chr(10), " | ")}
+<br>
 
-                    <b>Date & Time:</b>
-                    {get_current_time()}
-                    <br>
+<b>Date & Time:</b>
+{get_current_time()}
+<br>
 
-                    <b>Status:</b>
-                    Violation Detected
+<b>Status:</b>
+Violation Detected
 
-                    </div>
-                    """
+</div>
+""",
+                        unsafe_allow_html=True
                     )
 
+                    # 5-MINUTE COOLDOWN
                     generate_alert()
+
 
                 elif video_status == "NORMAL":
 
-                    render_html(
-                    """
-                    <div class="status-normal">
+                    st.markdown(
+                        """
+<div class="status-normal">
 
-                    <div class="status-title">
-                    ✅ No Garbage Overflow Detected
-                    </div>
+<div class="status-title">
+✅ No Garbage Overflow Detected
+</div>
 
-                    <b>Status:</b>
-                    Normal
+<b>Status:</b>
+Normal
 
-                    </div>
-                    """
+</div>
+""",
+                        unsafe_allow_html=True
                     )
+
 
                 else:
 
-                    render_html(
-                    """
-                    <div class="status-no-detection">
+                    st.markdown(
+                        """
+<div class="status-no-detection">
 
-                    ⚠️ No clear garbage condition
-                    was detected in the video.
+⚠️ No clear garbage condition
+was detected in the video.
 
-                    </div>
-                    """
+</div>
+""",
+                        unsafe_allow_html=True
                     )
+
 
             else:
 
-                render_html(
-                """
-                <div class="waiting-visible">
-                🎥 Click "Analyze CCTV Video"
-                to generate AI output
-                </div>
-                """
+                st.markdown(
+                    """
+<div class="waiting-visible">
+🎥 Click "Analyze CCTV Video"
+to generate AI output
+</div>
+""",
+                    unsafe_allow_html=True
                 )
 
         else:
@@ -3875,10 +3819,9 @@ else:
                 "Video prediction output will appear here."
             )
 
-        render_html(
-        """
-        </div>
-        """
+        st.markdown(
+            "</div>",
+            unsafe_allow_html=True
         )
 
 
@@ -3886,10 +3829,11 @@ else:
     # FOOTER
     # ========================================================
 
-    render_html(
-    """
-    <div class="footer-text">
-    EcoBin AI • AI-Powered Smart Garbage Overflow Detection
-    </div>
-    """
+    st.markdown(
+        """
+<div class="footer-text">
+EcoBin AI • AI-Powered Smart Garbage Overflow Detection
+</div>
+""",
+        unsafe_allow_html=True
     )
