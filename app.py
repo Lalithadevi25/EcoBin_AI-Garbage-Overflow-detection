@@ -1967,6 +1967,7 @@ Capstone Project
 
 <div class="hero-project-name">
 ♻️ EcoBin-AI
+📈 Intelligent Safety • Real-Time Detection
 </div>
 
 </div>
