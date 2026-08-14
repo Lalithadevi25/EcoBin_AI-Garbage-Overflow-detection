@@ -9,6 +9,7 @@ import smtplib
 import subprocess
 import imageio_ffmpeg
 import requests
+import base64
 
 from email.message import EmailMessage
 from datetime import datetime
@@ -48,12 +49,13 @@ defaults = {
 }
 
 for key, value in defaults.items():
+
     if key not in st.session_state:
         st.session_state[key] = value
 
 
 # ============================================================
-# DARK PREMIUM UI
+# PREMIUM DARK UI
 # ============================================================
 
 st.markdown(
@@ -65,26 +67,30 @@ st.markdown(
    ============================================================ */
 
 :root {
-    --bg-main: #070b14;
-    --bg-secondary: #0b1220;
-    --bg-card: #0f1726;
-    --bg-card2: #111c2e;
+
+    --bg: #050b14;
+    --bg2: #08111f;
+
+    --card: #0b1626;
+    --card2: #0d192b;
+
+    --border: #263a55;
+    --border2: #314965;
+
+    --white: #f8fafc;
+    --text: #dce7f5;
+    --muted: #91a3ba;
+
+    --blue: #3b82f6;
+    --blue2: #60a5fa;
 
     --green: #22c55e;
-    --green-bright: #39ff88;
-    --blue: #3b82f6;
-    --blue-bright: #60a5fa;
-    --purple: #8b5cf6;
+    --green2: #34d399;
 
-    --text-main: #f1f5f9;
-    --text-soft: #cbd5e1;
-    --text-muted: #94a3b8;
-
-    --border: rgba(148,163,184,.18);
-    --border-green: rgba(34,197,94,.35);
+    --purple: #7c5cff;
 
     --danger: #ef4444;
-    --warning: #fb923c;
+    --orange: #fb923c;
 }
 
 
@@ -95,47 +101,51 @@ st.markdown(
 .stApp {
 
     background:
+
         radial-gradient(
-            circle at 10% 0%,
-            rgba(34,197,94,.12),
+            circle at 5% 5%,
+            rgba(34,197,94,.08),
+            transparent 23%
+        ),
+
+        radial-gradient(
+            circle at 95% 5%,
+            rgba(59,130,246,.08),
             transparent 25%
         ),
 
-        radial-gradient(
-            circle at 90% 5%,
-            rgba(59,130,246,.12),
-            transparent 28%
-        ),
+        linear-gradient(
+            135deg,
+            #050b14,
+            #07101c 45%,
+            #040912
+        );
 
-        radial-gradient(
-            circle at 50% 100%,
-            rgba(139,92,246,.08),
-            transparent 30%
-        ),
-
-        #070b14;
-
-    color: var(--text-main);
+    color: var(--text);
 }
 
+
+/* ============================================================
+   CONTAINER
+   ============================================================ */
 
 .block-container {
 
     max-width: 1280px;
 
     padding:
-        28px
-        5%
-        35px
-        5%;
+        22px 4% 28px 4% !important;
 }
 
 
-/* HIDE DEFAULT STREAMLIT UI */
+/* ============================================================
+   HIDE STREAMLIT DEFAULT UI
+   ============================================================ */
 
 #MainMenu,
 footer,
 header {
+
     visibility: hidden;
 }
 
@@ -148,19 +158,19 @@ header {
 .stMarkdown p,
 .stMarkdown li {
 
-    color: var(--text-soft);
+    color: var(--text);
 }
 
 
 /* ============================================================
-   HOME HERO TITLE
+   HOME TITLE
    ============================================================ */
 
 .hero-title {
 
     text-align: center;
 
-    color: #f8fafc;
+    color: #e8f1ff;
 
     font-size: 31px;
 
@@ -176,122 +186,108 @@ header {
 
     text-align: center;
 
-    color: var(--text-muted);
+    color: #8497b0;
 
     font-size: 13px;
 
     margin:
-        5px
-        0
-        24px
-        0;
+        4px 0 18px 0;
 }
 
 
 /* ============================================================
-   HERO CARD
+   NEW HERO CARD
    ============================================================ */
 
-.hero-card {
+.hero-card-new {
 
-    min-height: 300px;
+    min-height: 315px;
 
     background:
+
+        radial-gradient(
+            circle at 88% 85%,
+            rgba(34,197,94,.07),
+            transparent 30%
+        ),
+
+        radial-gradient(
+            circle at 5% 10%,
+            rgba(59,130,246,.05),
+            transparent 28%
+        ),
+
         linear-gradient(
             145deg,
-            rgba(17,28,46,.97),
-            rgba(9,15,27,.97)
+            #0d1728,
+            #08111f
         );
 
     border:
-        1px solid
-        rgba(148,163,184,.20);
+        1px solid #263a55;
 
-    border-radius: 20px;
+    border-radius:
+        22px;
 
-    padding: 28px;
+    padding:
+        38px 40px 27px 40px;
 
     box-shadow:
-        0 20px 50px
-        rgba(0,0,0,.35),
+
+        0 18px 50px
+        rgba(0,0,0,.34),
 
         inset 0 1px 0
-        rgba(255,255,255,.04);
+        rgba(255,255,255,.025);
 
     position: relative;
 
     overflow: hidden;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: space-between;
 }
 
 
 /* TOP GRADIENT LINE */
 
-.hero-card:before {
+.hero-card-new::before {
 
     content: "";
 
     position: absolute;
 
     left: 0;
-
     top: 0;
 
     width: 100%;
-
     height: 5px;
 
     background:
+
         linear-gradient(
             90deg,
             #22c55e,
             #3b82f6,
-            #8b5cf6
+            #7c5cff
         );
-}
-
-
-/* GLOW */
-
-.hero-card:after {
-
-    content: "";
-
-    position: absolute;
-
-    width: 180px;
-
-    height: 180px;
-
-    right: -80px;
-
-    bottom: -90px;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(34,197,94,.12),
-            transparent 70%
-        );
-
-    pointer-events: none;
-}
-
-
-.hero-left {
-
-    display: flex;
-
-    flex-direction: column;
-
-    justify-content: center;
-
-    height: 100%;
 }
 
 
 /* ============================================================
-   PROGRAM PILL
+   HERO TOP CONTENT
    ============================================================ */
+
+.hero-top-content {
+
+    position: relative;
+
+    z-index: 2;
+}
+
 
 .program-pill {
 
@@ -300,133 +296,186 @@ header {
     width: fit-content;
 
     padding:
-        7px
+        9px 15px;
+
+    border-radius:
+        999px;
+
+    background:
+        rgba(37,99,235,.10);
+
+    color:
+        #b9d3f7;
+
+    border:
+        1px solid #31527b;
+
+    font-size:
+        12px;
+
+    font-weight:
+        800;
+
+    margin-bottom:
+        25px;
+}
+
+
+.hero-career-new {
+
+    color:
+        #f5f8fc;
+
+    font-size:
+        33px;
+
+    font-weight:
+        900;
+
+    line-height:
+        1.2;
+
+    margin-bottom:
         13px;
+}
 
-    border-radius: 999px;
 
-    background:
-        rgba(59,130,246,.10);
+.hero-capstone-new {
 
-    color: #bfdbfe;
+    color:
+        #9aabc0;
 
-    border:
-        1px solid
-        rgba(96,165,250,.30);
+    font-size:
+        18px;
 
-    font-size: 11px;
-
-    font-weight: 800;
-
-    margin-bottom: 16px;
+    font-weight:
+        700;
 }
 
 
 /* ============================================================
-   HERO TEXT
+   HERO PROJECT AREA
    ============================================================ */
 
-.hero-career {
+.hero-project-area {
 
-    color: #f8fafc;
+    display:
+        flex;
 
-    font-size: 27px;
+    align-items:
+        center;
 
-    font-weight: 900;
+    justify-content:
+        space-between;
 
-    line-height: 1.18;
+    gap:
+        20px;
 
-    margin:
-        0
-        0
-        8px
-        0;
-}
+    margin-top:
+        30px;
 
+    position:
+        relative;
 
-.hero-capstone {
-
-    color: #94a3b8;
-
-    font-size: 14px;
-
-    font-weight: 700;
-
-    margin-bottom: 18px;
-}
-
-
-/* ============================================================
-   ECOBIN PROJECT ROW
-   LOGO NOW INSIDE CARD
-   ============================================================ */
-
-.hero-project-row {
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 13px;
-
-    margin-top: 4px;
-}
-
-
-.hero-project-logo {
-
-    width: 58px;
-
-    height: 58px;
-
-    object-fit: contain;
-
-    border-radius: 12px;
-
-    background:
-        rgba(255,255,255,.96);
-
-    border:
-        1px solid
-        rgba(255,255,255,.16);
-
-    padding: 3px;
-
-    box-shadow:
-        0 8px 20px
-        rgba(0,0,0,.30);
+    z-index:
+        2;
 }
 
 
 .hero-project-info {
 
-    display: flex;
+    flex:
+        1;
 
-    flex-direction: column;
-
-    gap: 4px;
+    min-width:
+        0;
 }
 
 
-.hero-project-name {
+.hero-project-name-new {
 
-    color: #39ff88;
+    color:
+        #22e879;
 
-    font-size: 18px;
+    font-size:
+        25px;
 
-    font-weight: 900;
+    font-weight:
+        900;
 
-    margin: 0;
+    line-height:
+        1.2;
+
+    margin-bottom:
+        7px;
 }
 
 
-.hero-project-tagline {
+.hero-project-subtitle {
 
-    color: #94a3b8;
+    color:
+        #95a7bd;
 
-    font-size: 10.5px;
+    font-size:
+        12px;
 
-    font-weight: 600;
+    font-weight:
+        700;
+
+    white-space:
+        nowrap;
+}
+
+
+/* ============================================================
+   LOGO INSIDE HERO CARD
+   ============================================================ */
+
+.hero-logo-container {
+
+    width:
+        92px;
+
+    height:
+        92px;
+
+    flex-shrink:
+        0;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+}
+
+
+.hero-project-logo {
+
+    width:
+        84px;
+
+    height:
+        84px;
+
+    object-fit:
+        contain;
+
+    border-radius:
+        17px;
+
+    background:
+        #ffffff;
+
+    padding:
+        3px;
+
+    box-shadow:
+        0 9px 25px
+        rgba(0,0,0,.35);
 }
 
 
@@ -436,62 +485,61 @@ header {
 
 .description-card {
 
-    min-height: 300px;
+    min-height:
+        315px;
 
     background:
+
         linear-gradient(
             145deg,
-            rgba(17,28,46,.97),
-            rgba(9,15,27,.97)
-        );
+            #0d1728,
+            #08111f
+        ) !important;
 
     border:
-        1px solid
-        rgba(148,163,184,.18);
+        1px solid #263a55 !important;
 
-    border-radius: 20px;
+    border-radius:
+        22px;
 
     padding:
-        25px
-        27px;
+        25px 27px;
 
     box-shadow:
-        0 20px 50px
-        rgba(0,0,0,.30);
+        0 15px 40px
+        rgba(0,0,0,.27) !important;
 }
 
 
 .description-heading {
 
-    color: #f8fafc;
+    color:
+        #e8f1ff !important;
 
-    font-size: 18px;
+    font-size:
+        18px;
 
-    font-weight: 900;
+    font-weight:
+        900;
 
-    margin-bottom: 13px;
+    margin-bottom:
+        13px;
 }
 
 
 .description-card p {
 
-    color: #94a3b8;
+    color:
+        #93a6bd !important;
 
-    font-size: 13px;
+    font-size:
+        13px;
 
-    line-height: 1.75;
+    line-height:
+        1.75;
 
     margin:
-        0
-        0
-        14px
-        0;
-}
-
-
-.description-card b {
-
-    color: #e2e8f0;
+        0 0 14px 0;
 }
 
 
@@ -501,18 +549,26 @@ header {
 
 .section-title {
 
-    color: #f1f5f9;
+    color:
+        #dce9f9;
 
-    font-size: 19px;
+    font-size:
+        19px;
 
-    font-weight: 900;
+    font-weight:
+        900;
 
     margin:
-        28px
-        0
-        12px
-        0;
+        15px 0 10px 0;
 }
+
+
+/*
+IMPORTANT:
+No huge margin after hero.
+This keeps System Capabilities close to
+the first-page structure.
+*/
 
 
 /* ============================================================
@@ -522,147 +578,157 @@ header {
 .capability-card {
 
     background:
+
         linear-gradient(
             145deg,
-            rgba(17,28,46,.95),
-            rgba(9,15,27,.95)
-        );
+            #0d192b,
+            #091321
+        ) !important;
 
     border:
-        1px solid
-        rgba(148,163,184,.16);
+        1px solid #263a55;
 
-    border-radius: 16px;
+    border-radius:
+        16px;
 
     padding:
-        18px
-        14px;
+        16px 12px;
 
-    min-height: 115px;
+    min-height:
+        105px;
 
-    text-align: center;
+    text-align:
+        center;
 
     box-shadow:
-        0 10px 25px
-        rgba(0,0,0,.24);
-
-    transition:
-        transform .2s ease,
-        border-color .2s ease;
-}
-
-
-.capability-card:hover {
-
-    transform: translateY(-3px);
-
-    border-color:
-        rgba(34,197,94,.35);
+        0 9px 25px
+        rgba(0,0,0,.22);
 }
 
 
 .capability-icon {
 
-    font-size: 21px;
+    font-size:
+        21px;
 
-    margin-bottom: 5px;
+    margin-bottom:
+        5px;
 }
 
 
 .capability-title {
 
-    color: #e2e8f0;
+    color:
+        #e4edf9 !important;
 
-    font-size: 13px;
+    font-size:
+        13px;
 
-    font-weight: 900;
+    font-weight:
+        900;
 }
 
 
 .capability-text {
 
-    color: #94a3b8;
+    color:
+        #8ea1b8 !important;
 
-    font-size: 10.5px;
+    font-size:
+        10.5px;
 
-    line-height: 1.45;
+    line-height:
+        1.45;
 
-    margin-top: 5px;
+    margin-top:
+        5px;
 }
 
 
 /* ============================================================
-   TEAM CARD
+   TEAM
    ============================================================ */
 
 .team-card {
 
     background:
+
         linear-gradient(
             145deg,
-            rgba(17,28,46,.95),
-            rgba(9,15,27,.95)
-        );
+            #0d192b,
+            #091321
+        ) !important;
 
     border:
-        1px solid
-        rgba(148,163,184,.16);
+        1px solid #263a55;
 
-    border-radius: 17px;
+    border-radius:
+        17px;
 
-    padding: 19px;
+    padding:
+        19px;
 
-    min-height: 150px;
+    min-height:
+        150px;
 
     box-shadow:
-        0 10px 25px
-        rgba(0,0,0,.25);
+        0 9px 25px
+        rgba(0,0,0,.20);
 }
 
 
 .team-heading {
 
-    color: #e2e8f0;
+    color:
+        #a9c7ef !important;
 
-    font-size: 11px;
+    font-size:
+        11px;
 
-    font-weight: 900;
+    font-weight:
+        900;
 
-    letter-spacing: .3px;
+    letter-spacing:
+        .3px;
 
-    margin-bottom: 10px;
+    margin-bottom:
+        10px;
 }
 
 
 .team-text {
 
-    color: #94a3b8;
+    color:
+        #91a3ba !important;
 
-    font-size: 11px;
+    font-size:
+        11px;
 
-    line-height: 1.9;
+    line-height:
+        1.9;
 }
 
 
 .team-text a {
 
-    color: #60a5fa !important;
+    color:
+        #60a5fa !important;
 }
 
 
-/* ============================================================
-   FOOTER
-   ============================================================ */
-
 .footer-text {
 
-    text-align: center;
+    text-align:
+        center;
 
-    color: #64748b;
+    color:
+        #6f829a;
 
-    font-size: 11px;
+    font-size:
+        11px;
 
-    margin-top: 25px;
+    margin-top:
+        20px;
 }
 
 
@@ -673,76 +739,54 @@ header {
 .page-header {
 
     background:
+
         linear-gradient(
             135deg,
-            #10243f,
-            #0d1b30
+            #102544,
+            #122e51
         );
 
-    border:
-        1px solid
-        rgba(96,165,250,.20);
-
-    border-radius: 20px;
+    border-radius:
+        20px;
 
     padding:
-        22px
-        25px;
+        22px 25px;
 
-    color: white;
+    color:
+        white;
 
-    margin-bottom: 18px;
+    margin-bottom:
+        18px;
 
     box-shadow:
-        0 15px 35px
+        0 12px 30px
         rgba(0,0,0,.30);
-
-    position: relative;
-
-    overflow: hidden;
-}
-
-
-.page-header:before {
-
-    content: "";
-
-    position: absolute;
-
-    left: 0;
-
-    top: 0;
-
-    width: 5px;
-
-    height: 100%;
-
-    background:
-        linear-gradient(
-            180deg,
-            #22c55e,
-            #3b82f6
-        );
 }
 
 
 .page-header-title {
 
-    font-size: 27px;
+    font-size:
+        27px;
 
-    font-weight: 900;
+    font-weight:
+        900;
 
-    margin: 0;
+    margin:
+        0;
 }
 
 
 .page-header-sub {
 
-    color: #94a3b8;
+    color:
+        #a9c7e8;
 
-    font-size: 12px;
+    font-size:
+        12px;
 
-    margin-top: 5px;
+    margin-top:
+        5px;
 }
 
 
@@ -753,59 +797,53 @@ header {
 .location-card {
 
     background:
+
         linear-gradient(
             135deg,
-            rgba(16,35,55,.95),
-            rgba(11,29,24,.95)
+            #0d2132,
+            #0b2419
         );
 
     border:
-        1px solid
-        rgba(34,197,94,.20);
+        1px solid #27516c;
 
-    border-radius: 16px;
+    border-radius:
+        16px;
 
     padding:
-        15px
-        18px;
+        15px 18px;
 
     margin:
-        8px
-        0
-        20px
-        0;
-
-    box-shadow:
-        0 10px 25px
-        rgba(0,0,0,.22);
+        8px 0 20px 0;
 }
 
 
 .location-heading {
 
-    color: #e2e8f0;
+    color:
+        #dcecff;
 
-    font-size: 15px;
+    font-size:
+        15px;
 
-    font-weight: 900;
+    font-weight:
+        900;
 
-    margin-bottom: 9px;
+    margin-bottom:
+        9px;
 }
 
 
 .location-line {
 
-    color: #94a3b8 !important;
+    color:
+        #9bb0c8 !important;
 
-    font-size: 12px;
+    font-size:
+        12px;
 
-    line-height: 1.7;
-}
-
-
-.location-line b {
-
-    color: #cbd5e1;
+    line-height:
+        1.7;
 }
 
 
@@ -815,17 +853,17 @@ header {
 
 .mode-title {
 
-    color: #f1f5f9;
+    color:
+        #dce9f9;
 
-    font-size: 20px;
+    font-size:
+        20px;
 
-    font-weight: 900;
+    font-weight:
+        900;
 
     margin:
-        28px
-        0
-        12px
-        0;
+        22px 0 12px 0;
 }
 
 
@@ -836,53 +874,66 @@ header {
 .io-card {
 
     background:
+
         linear-gradient(
             145deg,
-            rgba(17,28,46,.96),
-            rgba(9,15,27,.96)
+            #0d192b,
+            #091321
         );
 
     border:
-        1px solid
-        rgba(148,163,184,.17);
+        1px solid #263a55;
 
-    border-radius: 17px;
+    border-radius:
+        17px;
 
-    padding: 14px;
+    padding:
+        14px;
 
-    min-height: 0 !important;
+    min-height:
+        0 !important;
 
-    height: auto !important;
+    height:
+        auto !important;
 
     box-shadow:
-        0 10px 25px
-        rgba(0,0,0,.25);
+        0 8px 23px
+        rgba(0,0,0,.22);
 
-    overflow: hidden;
+    overflow:
+        hidden;
 }
 
 
 .io-card-title {
 
-    color: #f1f5f9 !important;
+    color:
+        #dcecff !important;
 
-    font-size: 15px;
+    font-size:
+        15px;
 
-    font-weight: 900;
+    font-weight:
+        900;
 
-    margin-bottom: 7px;
+    margin-bottom:
+        7px;
 }
 
 
 .io-description {
 
-    color: #94a3b8 !important;
+    color:
+        #8fa3bb !important;
 
-    font-size: 11px;
+    font-size:
+        11px;
 
-    font-weight: 600;
+    font-weight:
+        600;
 
-    margin-bottom: 8px;
+    margin-bottom:
+        8px;
 }
 
 
@@ -892,32 +943,41 @@ header {
 
 .empty-message {
 
-    min-height: 120px;
+    min-height:
+        120px;
 
-    display: flex;
+    display:
+        flex;
 
-    align-items: center;
+    align-items:
+        center;
 
-    justify-content: center;
+    justify-content:
+        center;
 
-    text-align: center;
+    text-align:
+        center;
 
-    color: #94a3b8 !important;
+    color:
+        #8ea2ba !important;
 
     background:
-        rgba(15,23,38,.70);
+        #08111e;
 
     border:
-        1px dashed
-        rgba(148,163,184,.30);
+        1px dashed #314964;
 
-    border-radius: 12px;
+    border-radius:
+        12px;
 
-    padding: 15px;
+    padding:
+        15px;
 
-    font-size: 12px;
+    font-size:
+        12px;
 
-    font-weight: 700;
+    font-weight:
+        700;
 }
 
 
@@ -927,97 +987,110 @@ header {
 
 div[data-testid="stFileUploader"] {
 
-    color: #cbd5e1 !important;
+    color:
+        #d7e4f3 !important;
 }
 
 
 div[data-testid="stFileUploader"] label {
 
-    color: #cbd5e1 !important;
+    color:
+        #cbd9ea !important;
 
-    font-weight: 700 !important;
+    font-weight:
+        700 !important;
 }
 
 
 div[data-testid="stFileUploaderDropzone"] {
 
     background:
-        #0b1322 !important;
+        #08111e !important;
 
     border:
-        1px dashed
-        #334155 !important;
+        1px dashed #314964 !important;
 
-    border-radius: 11px !important;
+    border-radius:
+        11px !important;
 
-    padding: 10px !important;
+    padding:
+        10px !important;
 }
 
 
 div[data-testid="stFileUploaderDropzoneInstructions"] {
 
-    color: #cbd5e1 !important;
+    color:
+        #a1b2c7 !important;
 }
 
 
 div[data-testid="stFileUploaderDropzoneInstructions"] span {
 
-    color: #cbd5e1 !important;
+    color:
+        #a1b2c7 !important;
 }
 
 
 div[data-testid="stFileUploaderDropzoneInstructions"] small {
 
-    color: #64748b !important;
+    color:
+        #71869f !important;
 }
 
 
 div[data-testid="stFileUploaderDropzone"] button {
 
-    color: #ffffff !important;
+    color:
+        #ffffff !important;
 
     background:
-        linear-gradient(
-            135deg,
-            #173b6c,
-            #24548d
-        ) !important;
+        #173b6c !important;
 
-    border: none !important;
+    border:
+        none !important;
 }
 
 
 /* ============================================================
-   IMAGE PREVIEW
+   PREVIEW
    ============================================================ */
 
 .preview-box {
 
-    background: #0b1322;
+    background:
+        #08111e;
 
     border:
-        1px solid
-        #243247;
+        1px solid #263a55;
 
-    border-radius: 12px;
+    border-radius:
+        12px;
 
-    padding: 7px;
+    padding:
+        7px;
 
-    text-align: center;
+    text-align:
+        center;
 
-    margin-top: 5px;
+    margin-top:
+        5px;
 }
 
 
 .preview-label {
 
-    color: #94a3b8 !important;
+    color:
+        #91a4bb !important;
 
-    font-size: 11px;
+    font-size:
+        11px;
 
-    font-weight: 700;
+    font-weight:
+        700;
 
-    margin-bottom: 5px;
+    margin-bottom:
+        5px;
 }
 
 
@@ -1027,22 +1100,26 @@ div[data-testid="stFileUploaderDropzone"] button {
 
 div.stButton > button {
 
-    width: 100%;
+    width:
+        100%;
 
-    border-radius: 10px !important;
+    border-radius:
+        10px !important;
 
-    min-height: 42px;
+    min-height:
+        42px;
 
-    font-weight: 800 !important;
+    font-weight:
+        800 !important;
 
     border:
-        1px solid
-        #334155 !important;
+        1px solid #314964 !important;
 
-    color: #dbeafe !important;
+    color:
+        #cfe0f2 !important;
 
     background:
-        #101a2b !important;
+        #0c1828 !important;
 
     transition:
         all .2s ease;
@@ -1054,13 +1131,14 @@ div.stButton > button:hover {
     border-color:
         #3b82f6 !important;
 
-    color: #ffffff !important;
+    color:
+        #ffffff !important;
 
     background:
-        #14243b !important;
+        #10243c !important;
 
     box-shadow:
-        0 5px 18px
+        0 5px 17px
         rgba(59,130,246,.16);
 }
 
@@ -1072,35 +1150,22 @@ div.stButton > button:hover {
 .primary-btn div.stButton > button {
 
     background:
+
         linear-gradient(
             135deg,
-            #16a34a,
-            #15803d
+            #176b45,
+            #155e75
         ) !important;
 
-    color: #ffffff !important;
+    color:
+        #ffffff !important;
 
     border:
         none !important;
 
     box-shadow:
         0 8px 22px
-        rgba(34,197,94,.20);
-}
-
-
-.primary-btn div.stButton > button:hover {
-
-    background:
-        linear-gradient(
-            135deg,
-            #22c55e,
-            #16a34a
-        ) !important;
-
-    box-shadow:
-        0 10px 28px
-        rgba(34,197,94,.30);
+        rgba(34,197,94,.13);
 }
 
 
@@ -1111,239 +1176,258 @@ div.stButton > button:hover {
 .success-visible {
 
     background:
-        rgba(20,83,45,.25) !important;
+        rgba(22,163,74,.12) !important;
 
     border:
-        1.5px solid
-        rgba(34,197,94,.55) !important;
+        1.5px solid #22c55e !important;
 
-    border-radius: 10px !important;
+    border-radius:
+        10px !important;
 
     padding:
-        10px
+        10px 12px !important;
+
+    margin-top:
+        9px !important;
+
+    color:
+        #86efac !important;
+
+    font-size:
         12px !important;
 
-    margin-top: 9px !important;
-
-    color: #86efac !important;
-
-    font-size: 12px !important;
-
-    font-weight: 800 !important;
+    font-weight:
+        800 !important;
 }
 
 
 .waiting-visible {
 
     background:
-        rgba(30,64,175,.15);
+        rgba(37,99,235,.10);
 
     border:
-        1px solid
-        rgba(96,165,250,.25);
+        1px solid #315d91;
 
-    border-radius: 10px;
+    border-radius:
+        10px;
 
-    padding: 10px;
+    padding:
+        10px;
 
-    color: #93c5fd;
+    color:
+        #9fc3f1;
 
-    font-size: 11px;
+    font-size:
+        11px;
 
-    font-weight: 700;
+    font-weight:
+        700;
 
-    text-align: center;
+    text-align:
+        center;
 }
 
 
 /* ============================================================
-   OUTPUT RESULT
+   OUTPUT
    ============================================================ */
 
 .output-result {
 
-    margin-top: 10px;
+    margin-top:
+        10px;
 
     background:
-        #0b1322;
+        #08111e;
 
     border:
-        1px solid
-        #243247;
+        1px solid #263a55;
 
-    border-radius: 13px;
+    border-radius:
+        13px;
 
-    padding: 9px;
+    padding:
+        9px;
 }
 
 
 .output-result-title {
 
-    color: #dbeafe !important;
+    color:
+        #cfe0f3 !important;
 
-    font-size: 12px;
+    font-size:
+        12px;
 
-    font-weight: 900;
+    font-weight:
+        900;
 
-    margin-bottom: 7px;
+    margin-bottom:
+        7px;
 }
 
 
 /* ============================================================
-   OVERFLOW
+   STATUS OVERFLOW
    ============================================================ */
 
 .status-overflow {
 
     background:
-        rgba(127,29,29,.20) !important;
+        rgba(127,29,29,.18) !important;
 
     border:
-        2px solid
-        rgba(239,68,68,.65) !important;
+        2px solid #ef4444 !important;
 
-    border-radius: 12px;
+    border-radius:
+        12px;
 
-    padding: 11px;
+    padding:
+        11px;
 
-    color: #fca5a5 !important;
+    color:
+        #fca5a5 !important;
 
-    font-size: 11px;
+    font-size:
+        11px;
 
-    line-height: 1.7;
+    line-height:
+        1.7;
 
-    margin-top: 9px;
+    margin-top:
+        9px;
 }
 
-
-.status-overflow b {
-
-    color: #fecaca;
-}
-
-
-/* ============================================================
-   NORMAL
-   ============================================================ */
 
 .status-normal {
 
     background:
-        rgba(20,83,45,.20) !important;
+        rgba(21,128,61,.15) !important;
 
     border:
-        2px solid
-        rgba(34,197,94,.60) !important;
+        2px solid #22c55e !important;
 
-    border-radius: 12px;
+    border-radius:
+        12px;
 
-    padding: 11px;
+    padding:
+        11px;
 
-    color: #86efac !important;
+    color:
+        #86efac !important;
 
-    font-size: 11px;
+    font-size:
+        11px;
 
-    line-height: 1.7;
+    line-height:
+        1.7;
 
-    margin-top: 9px;
+    margin-top:
+        9px;
 }
 
-
-.status-normal b {
-
-    color: #bbf7d0;
-}
-
-
-/* ============================================================
-   NO DETECTION
-   ============================================================ */
 
 .status-no-detection {
 
     background:
-        rgba(124,45,18,.20) !important;
+        rgba(154,52,18,.14) !important;
 
     border:
-        2px solid
-        rgba(251,146,60,.60) !important;
+        2px solid #fb923c !important;
 
-    border-radius: 12px;
+    border-radius:
+        12px;
 
-    padding: 11px;
+    padding:
+        11px;
 
-    color: #fdba74 !important;
+    color:
+        #fdba74 !important;
 
-    font-size: 11px;
+    font-size:
+        11px;
 
-    font-weight: 700;
+    font-weight:
+        700;
 
-    margin-top: 9px;
+    margin-top:
+        9px;
 }
 
 
 .status-title {
 
-    font-size: 14px;
+    font-size:
+        14px;
 
-    font-weight: 900;
+    font-weight:
+        900;
 
-    margin-bottom: 5px;
+    margin-bottom:
+        5px;
 }
 
 
 /* ============================================================
-   DETECTION DETAILS
+   DETAILS
    ============================================================ */
 
 .details-card {
 
     background:
-        #0b1322 !important;
+        #0b1626 !important;
 
     border:
-        1px solid
-        #243247 !important;
+        1px solid #263a55 !important;
 
-    border-radius: 11px;
+    border-radius:
+        11px;
 
     padding:
-        10px
-        12px;
+        10px 12px;
 
-    margin-top: 9px;
+    margin-top:
+        9px;
 }
 
 
 .details-title {
 
-    color: #dbeafe !important;
+    color:
+        #cfe0f3 !important;
 
-    font-size: 12px;
+    font-size:
+        12px;
 
-    font-weight: 900;
+    font-weight:
+        900;
 
-    margin-bottom: 5px;
+    margin-bottom:
+        5px;
 }
 
 
 .detail-row {
 
-    color: #94a3b8 !important;
+    color:
+        #91a4bb !important;
 
-    font-size: 11px;
+    font-size:
+        11px;
 
-    padding: 5px 0;
+    padding:
+        5px 0;
 
     border-bottom:
-        1px solid
-        #1e293b;
+        1px solid #1c2b3e;
 }
 
 
 .detail-row:last-child {
 
-    border-bottom: none;
+    border-bottom:
+        none;
 }
 
 
@@ -1354,41 +1438,51 @@ div.stButton > button:hover {
 .email-success {
 
     background:
-        rgba(20,83,45,.25) !important;
+        rgba(22,163,74,.12) !important;
 
     border:
-        2px solid
-        rgba(34,197,94,.55) !important;
+        2px solid #22c55e !important;
 
-    border-radius: 11px;
+    border-radius:
+        11px;
 
-    padding: 10px;
+    padding:
+        10px;
 
-    text-align: center;
+    text-align:
+        center;
 
-    margin-top: 9px;
+    margin-top:
+        9px;
 }
 
 
 .email-success-title {
 
-    color: #86efac !important;
+    color:
+        #86efac !important;
 
-    font-size: 12px;
+    font-size:
+        12px;
 
-    font-weight: 900;
+    font-weight:
+        900;
 }
 
 
 .email-success-text {
 
-    color: #bbf7d0 !important;
+    color:
+        #6ee7b7 !important;
 
-    font-size: 10px;
+    font-size:
+        10px;
 
-    font-weight: 700;
+    font-weight:
+        700;
 
-    margin-top: 3px;
+    margin-top:
+        3px;
 }
 
 
@@ -1399,37 +1493,43 @@ div.stButton > button:hover {
 .video-result-box {
 
     background:
-        #0b1322;
+        #08111e;
 
     border:
-        1px solid
-        #243247;
+        1px solid #263a55;
 
-    border-radius: 12px;
+    border-radius:
+        12px;
 
-    padding: 8px;
+    padding:
+        8px;
 
-    margin-top: 8px;
+    margin-top:
+        8px;
 }
 
 
 /* ============================================================
-   STREAMLIT MEDIA
+   MEDIA
    ============================================================ */
 
 [data-testid="stImage"] {
 
-    border-radius: 10px;
+    border-radius:
+        10px;
 
-    overflow: hidden;
+    overflow:
+        hidden;
 }
 
 
 [data-testid="stVideo"] {
 
-    border-radius: 10px;
+    border-radius:
+        10px;
 
-    overflow: hidden;
+    overflow:
+        hidden;
 }
 
 
@@ -1440,11 +1540,7 @@ div.stButton > button:hover {
 .stProgress > div > div > div > div {
 
     background:
-        linear-gradient(
-            90deg,
-            #22c55e,
-            #3b82f6
-        );
+        #3b82f6;
 }
 
 
@@ -1454,81 +1550,58 @@ div.stButton > button:hover {
 
 div[data-testid="stCameraInput"] {
 
-    border-radius: 12px;
-
-    overflow: hidden;
+    border-radius:
+        12px;
 }
 
 
 /* ============================================================
-   STREAMLIT ALERT / INFO DARK THEME
-   ============================================================ */
-
-div[data-testid="stAlert"] {
-
-    background:
-        #111c2e !important;
-
-    color: #cbd5e1 !important;
-
-    border-radius: 10px;
-}
-
-
-/* ============================================================
-   LINK BUTTON
-   ============================================================ */
-
-.stLinkButton > a {
-
-    background:
-        #111c2e !important;
-
-    color:
-        #93c5fd !important;
-
-    border:
-        1px solid
-        #334155 !important;
-
-    border-radius: 10px !important;
-
-    font-weight: 800 !important;
-}
-
-
-/* ============================================================
-   RESPONSIVE
+   MOBILE
    ============================================================ */
 
 @media (max-width: 900px) {
 
     .hero-title {
-
         font-size: 25px;
     }
 
-    .hero-card,
-    .description-card {
+    .hero-card-new {
+        min-height: auto;
+        padding: 32px 25px 25px 25px;
+    }
 
+    .description-card {
         min-height: auto;
     }
 
-    .hero-career {
-
-        font-size: 23px;
+    .hero-career-new {
+        font-size: 27px;
     }
 
-    .io-card {
+    .hero-project-area {
+        margin-top: 30px;
+    }
 
-        margin-bottom: 12px;
+    .hero-project-name-new {
+        font-size: 21px;
+    }
+
+    .hero-project-subtitle {
+        white-space: normal;
+    }
+
+    .hero-logo-container {
+        width: 80px;
+        height: 80px;
     }
 
     .hero-project-logo {
+        width: 74px;
+        height: 74px;
+    }
 
-        width: 52px;
-
-        height: 52px;
+    .io-card {
+        margin-bottom: 12px;
     }
 }
 
@@ -1583,7 +1656,10 @@ def load_model():
 # ============================================================
 
 @st.cache_data(ttl=300)
-def reverse_geocode(latitude, longitude):
+def reverse_geocode(
+    latitude,
+    longitude
+):
 
     try:
 
@@ -1617,18 +1693,28 @@ def reverse_geocode(latitude, longitude):
         )
 
         area = (
+
             address.get("suburb")
+
             or address.get("neighbourhood")
+
             or address.get("village")
+
             or address.get("town")
+
             or address.get("city")
+
             or address.get("municipality")
         )
 
         city = (
+
             address.get("city")
+
             or address.get("town")
+
             or address.get("village")
+
             or address.get("municipality")
         )
 
@@ -1657,8 +1743,11 @@ def reverse_geocode(latitude, longitude):
             parts.append(postcode)
 
         return (
+
             ", ".join(parts)
+
             if parts
+
             else data.get(
                 "display_name",
                 "Area name unavailable"
@@ -1750,6 +1839,7 @@ def get_map_url():
     longitude = st.session_state.live_longitude
 
     if latitude is None or longitude is None:
+
         return None
 
     return (
@@ -1857,7 +1947,9 @@ def display_live_location():
         st.markdown(
             """
 <div class="location-line">
+
 📍 Allow browser location permission to load your live area.
+
 </div>
 """,
             unsafe_allow_html=True
@@ -1953,8 +2045,7 @@ This alert was automatically generated by EcoBin AI.
 
 
 # ============================================================
-# ALERT COOLDOWN
-# 5 MINUTES = 300 SECONDS
+# ALERT COOLDOWN - 5 MINUTES
 # ============================================================
 
 def generate_alert():
@@ -1966,6 +2057,8 @@ def generate_alert():
     previous = (
         st.session_state.last_alert_time
     )
+
+    # 5 MINUTE = 300 SECONDS
 
     if previous is not None:
 
@@ -2019,6 +2112,7 @@ def extract_detections(result):
     detections = []
 
     if result.boxes is None:
+
         return detections
 
     for box in result.boxes:
@@ -2049,18 +2143,22 @@ def extract_detections(result):
 # FINAL PREDICTION
 # ============================================================
 
-def get_final_prediction(detections):
+def get_final_prediction(
+    detections
+):
 
     overflow_detections = [
 
         d for d in detections
 
         if d["class"] in [
+
             "overflow",
             "overclass",
             "garbage overflow",
             "overflowing",
             "overflowed"
+
         ]
 
         and d["confidence"] >= 0.30
@@ -2071,10 +2169,12 @@ def get_final_prediction(detections):
         d for d in detections
 
         if d["class"] in [
+
             "normal",
             "normal bin",
             "non overflow",
             "non-overflow"
+
         ]
     ]
 
@@ -2112,7 +2212,10 @@ def get_final_prediction(detections):
 # IMAGE PREDICTION
 # ============================================================
 
-def predict_image(image, model):
+def predict_image(
+    image,
+    model
+):
 
     image_np = np.array(
         image
@@ -2357,6 +2460,7 @@ def process_video(
     )
 
     if fps <= 0:
+
         fps = 25
 
     width = int(
@@ -2421,6 +2525,7 @@ def process_video(
         ret, frame = cap.read()
 
         if not ret:
+
             break
 
         results = model.predict(
@@ -2527,8 +2632,9 @@ def process_video(
 
     progress.empty()
 
+
     # ========================================================
-    # FFMPEG CONVERSION
+    # FFMPEG
     # ========================================================
 
     try:
@@ -2596,7 +2702,10 @@ def process_video(
 
         output_video_bytes = None
 
+
+    # ========================================================
     # CLEAN TEMP FILES
+    # ========================================================
 
     for path in [
         raw_output_path,
@@ -2610,9 +2719,13 @@ def process_video(
                 os.remove(path)
 
         except Exception:
+
             pass
 
+
+    # ========================================================
     # FINAL VIDEO RESULT
+    # ========================================================
 
     if detection_count == 0:
 
@@ -2686,6 +2799,10 @@ def visible_success(message):
 
 if st.session_state.page == "home":
 
+    # ========================================================
+    # TITLE
+    # ========================================================
+
     st.markdown(
         '<div class="hero-title">♻️ EcoBin AI</div>',
         unsafe_allow_html=True
@@ -2700,10 +2817,16 @@ Smart Garbage Overflow Detection using Artificial Intelligence
         unsafe_allow_html=True
     )
 
+
+    # ========================================================
+    # HERO + DESCRIPTION
+    # ========================================================
+
     hero_left, hero_right = st.columns(
         [1, 1.25],
         gap="large"
     )
+
 
     # ========================================================
     # LEFT HERO
@@ -2718,80 +2841,82 @@ Smart Garbage Overflow Detection using Artificial Intelligence
 
         logo_html = ""
 
-        if os.path.exists(logo_path):
+        if os.path.exists(
+            logo_path
+        ):
 
-            # Convert local image to Streamlit-compatible
-            # HTML through markdown is not reliable,
-            # therefore image is placed below via columns.
-            pass
+            try:
 
-        st.markdown(
-            """
-<div class="hero-card">
-
-<div class="hero-left">
-
-<div class="program-pill">
-🎓 AICW PROGRAM
-</div>
-
-<div class="hero-career">
-👩🏻‍💻 AI Career for Women
-</div>
-
-<div class="hero-capstone">
-Capstone Project
-</div>
-
-<div class="hero-project-row">
-""",
-            unsafe_allow_html=True
-        )
-
-        # ----------------------------------------------------
-        # LOGO + ECOBIN AI INSIDE HERO CARD
-        # ----------------------------------------------------
-
-        logo_col, project_col = st.columns(
-            [0.22, 0.78],
-            gap="small"
-        )
-
-        with logo_col:
-
-            if os.path.exists(logo_path):
-
-                st.image(
+                with open(
                     logo_path,
-                    width=58
-                )
+                    "rb"
+                ) as image_file:
 
-        with project_col:
+                    encoded_logo = (
+                        base64.b64encode(
+                            image_file.read()
+                        ).decode()
+                    )
 
-            st.markdown(
-                """
-<div style="
-padding-top:7px;
-">
+                logo_html = f"""
+<img
+    src="data:image/png;base64,{encoded_logo}"
+    class="hero-project-logo"
+/>
+"""
 
-<div class="hero-project-name">
-♻️ EcoBin-AI
-</div>
+            except Exception:
 
-<div class="hero-project-tagline">
-📈 Intelligent Safety • Real-Time Detection
-</div>
+                logo_html = ""
 
-</div>
-""",
-                unsafe_allow_html=True
-            )
+
+        # ----------------------------------------------------
+        # SINGLE HERO CARD
+        # ----------------------------------------------------
 
         st.markdown(
-            """
-</div>
+            f"""
+<div class="hero-card-new">
 
-</div>
+    <div class="hero-top-content">
+
+        <div class="program-pill">
+            🎓 AICW PROGRAM
+        </div>
+
+        <div class="hero-career-new">
+            👩🏻‍💻 AI Career for Women
+        </div>
+
+        <div class="hero-capstone-new">
+            Capstone Project
+        </div>
+
+    </div>
+
+
+    <div class="hero-project-area">
+
+        <div class="hero-project-info">
+
+            <div class="hero-project-name-new">
+                ♻️ EcoBin-AI
+            </div>
+
+            <div class="hero-project-subtitle">
+                📧 Intelligent Safety • Real-Time Detection
+            </div>
+
+        </div>
+
+
+        <div class="hero-logo-container">
+
+            {logo_html}
+
+        </div>
+
+    </div>
 
 </div>
 """,
@@ -2800,7 +2925,7 @@ padding-top:7px;
 
 
     # ========================================================
-    # RIGHT HERO
+    # RIGHT DESCRIPTION
     # ========================================================
 
     with hero_right:
@@ -2843,13 +2968,14 @@ user's email address.
 
 
     # ========================================================
-    # CAPABILITIES
+    # SYSTEM CAPABILITIES
     # ========================================================
 
     st.markdown(
         '<div class="section-title">⚡ System Capabilities</div>',
         unsafe_allow_html=True
     )
+
 
     caps = [
 
@@ -2878,10 +3004,12 @@ user's email address.
         ),
     ]
 
+
     cap_cols = st.columns(
         4,
         gap="medium"
     )
+
 
     for col, (
         icon,
@@ -2916,20 +3044,20 @@ user's email address.
             )
 
 
-    st.markdown(
-        '<div style="height:14px"></div>',
-        unsafe_allow_html=True
-    )
-
-
     # ========================================================
     # START BUTTON
     # ========================================================
 
     st.markdown(
+        '<div style="height:10px"></div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
         '<div class="primary-btn">',
         unsafe_allow_html=True
     )
+
 
     if st.button(
         "🔎  START AI DETECTION",
@@ -2941,6 +3069,7 @@ user's email address.
 
         st.rerun()
 
+
     st.markdown(
         "</div>",
         unsafe_allow_html=True
@@ -2948,7 +3077,7 @@ user's email address.
 
 
     # ========================================================
-    # TEAM
+    # PROJECT TEAM
     # ========================================================
 
     st.markdown(
@@ -2956,10 +3085,16 @@ user's email address.
         unsafe_allow_html=True
     )
 
+
     team_col, mail_col, guide_col = st.columns(
         [1.25, 1.25, .85],
         gap="medium"
     )
+
+
+    # --------------------------------------------------------
+    # TEAM MEMBERS
+    # --------------------------------------------------------
 
     with team_col:
 
@@ -2985,6 +3120,10 @@ TEAM MEMBERS
             unsafe_allow_html=True
         )
 
+
+    # --------------------------------------------------------
+    # GMAIL
+    # --------------------------------------------------------
 
     with mail_col:
 
@@ -3025,6 +3164,10 @@ nadimpallisushmasri29@gmail.com
         )
 
 
+    # --------------------------------------------------------
+    # GUIDE
+    # --------------------------------------------------------
+
     with guide_col:
 
         st.markdown(
@@ -3053,6 +3196,10 @@ Trainer, Co-Lead-AICW
         )
 
 
+    # ========================================================
+    # FOOTER
+    # ========================================================
+
     st.markdown(
         """
 <div class="footer-text">
@@ -3078,6 +3225,7 @@ else:
         gap="medium"
     )
 
+
     with top_left:
 
         if st.button(
@@ -3088,6 +3236,7 @@ else:
             st.session_state.page = "home"
 
             st.rerun()
+
 
     with top_right:
 
@@ -3146,10 +3295,12 @@ AI-powered image, camera and CCTV garbage overflow analysis
         "Image Detection"
     )
 
+
     image_upload_col, image_input_col, image_output_col = st.columns(
         3,
         gap="medium"
     )
+
 
     input_image = None
 
@@ -3175,6 +3326,7 @@ Upload a garbage image for AI analysis
             unsafe_allow_html=True
         )
 
+
         uploaded_image = st.file_uploader(
             "Choose image",
             type=[
@@ -3185,6 +3337,7 @@ Upload a garbage image for AI analysis
             key="image_upload",
             label_visibility="collapsed"
         )
+
 
         if uploaded_image:
 
@@ -3202,6 +3355,7 @@ Upload a garbage image for AI analysis
 """,
                 unsafe_allow_html=True
             )
+
 
         st.markdown(
             "</div>",
@@ -3230,6 +3384,7 @@ Selected image preview
             unsafe_allow_html=True
         )
 
+
         if uploaded_image:
 
             try:
@@ -3254,6 +3409,7 @@ Selected image preview
             empty_box(
                 "Your selected image will appear here."
             )
+
 
         st.markdown(
             "</div>",
@@ -3281,6 +3437,7 @@ AI detection result
 """,
             unsafe_allow_html=True
         )
+
 
         if uploaded_image and input_image is not None:
 
@@ -3312,6 +3469,7 @@ AI detection result
                             f"❌ Image detection failed: {e}"
                         )
 
+
             if st.session_state.image_result is not None:
 
                 result, detections = (
@@ -3341,6 +3499,7 @@ AI detection result
                 "AI prediction output will appear here."
             )
 
+
         st.markdown(
             "</div>",
             unsafe_allow_html=True
@@ -3356,10 +3515,12 @@ AI detection result
         "Camera Detection"
     )
 
+
     camera_col, camera_input_col, camera_output_col = st.columns(
         3,
         gap="medium"
     )
+
 
     camera_pil = None
 
@@ -3385,11 +3546,13 @@ Capture a garbage-bin image
             unsafe_allow_html=True
         )
 
+
         camera_image = st.camera_input(
             "Capture image",
             key="camera",
             label_visibility="collapsed"
         )
+
 
         if not camera_image:
 
@@ -3401,6 +3564,7 @@ Capture a garbage-bin image
 """,
                 unsafe_allow_html=True
             )
+
 
         st.markdown(
             "</div>",
@@ -3429,6 +3593,7 @@ Captured image preview
             unsafe_allow_html=True
         )
 
+
         if camera_image:
 
             try:
@@ -3453,6 +3618,7 @@ Captured image preview
             empty_box(
                 "Captured camera image will appear here."
             )
+
 
         st.markdown(
             "</div>",
@@ -3480,6 +3646,7 @@ AI camera detection result
 """,
             unsafe_allow_html=True
         )
+
 
         if camera_image and camera_pil is not None:
 
@@ -3511,6 +3678,7 @@ AI camera detection result
                             f"❌ Camera detection failed: {e}"
                         )
 
+
             if st.session_state.camera_result is not None:
 
                 result, detections = (
@@ -3540,6 +3708,7 @@ AI camera detection result
                 "Camera prediction output will appear here."
             )
 
+
         st.markdown(
             "</div>",
             unsafe_allow_html=True
@@ -3554,6 +3723,7 @@ AI camera detection result
         "🎥",
         "CCTV / Video Detection"
     )
+
 
     video_upload_col, video_input_col, video_output_col = st.columns(
         3,
@@ -3582,6 +3752,7 @@ Upload CCTV/video footage
             unsafe_allow_html=True
         )
 
+
         uploaded_video = st.file_uploader(
             "Choose CCTV video",
             type=[
@@ -3594,6 +3765,7 @@ Upload CCTV/video footage
             key="video_upload",
             label_visibility="collapsed"
         )
+
 
         if uploaded_video:
 
@@ -3611,6 +3783,7 @@ Upload CCTV/video footage
 """,
                 unsafe_allow_html=True
             )
+
 
         st.markdown(
             "</div>",
@@ -3639,6 +3812,7 @@ Uploaded CCTV video preview
             unsafe_allow_html=True
         )
 
+
         if uploaded_video:
 
             st.video(
@@ -3650,6 +3824,7 @@ Uploaded CCTV video preview
             empty_box(
                 "Uploaded CCTV/video will appear here."
             )
+
 
         st.markdown(
             "</div>",
@@ -3678,6 +3853,7 @@ AI processed video result
             unsafe_allow_html=True
         )
 
+
         if uploaded_video:
 
             if st.button(
@@ -3696,6 +3872,7 @@ AI processed video result
                 )
 
                 temp_video.close()
+
 
                 try:
 
@@ -3741,6 +3918,7 @@ AI processed video result
                     video_conf
                 ) = st.session_state.video_result
 
+
                 if output_video_bytes is not None:
 
                     st.markdown(
@@ -3766,7 +3944,9 @@ AI processed video result
                     )
 
 
+                # =================================================
                 # VIDEO STATUS
+                # =================================================
 
                 if video_status == "GARBAGE OVERFLOW":
 
@@ -3802,7 +3982,9 @@ Violation Detected
                         unsafe_allow_html=True
                     )
 
+                    # 5-MINUTE COOLDOWN
                     generate_alert()
+
 
                 elif video_status == "NORMAL":
 
@@ -3822,6 +4004,7 @@ Normal
                         unsafe_allow_html=True
                     )
 
+
                 else:
 
                     st.markdown(
@@ -3836,13 +4019,16 @@ was detected in the video.
                         unsafe_allow_html=True
                     )
 
+
             else:
 
                 st.markdown(
                     """
 <div class="waiting-visible">
+
 🎥 Click "Analyze CCTV Video"
 to generate AI output
+
 </div>
 """,
                     unsafe_allow_html=True
@@ -3853,6 +4039,7 @@ to generate AI output
             empty_box(
                 "Video prediction output will appear here."
             )
+
 
         st.markdown(
             "</div>",
