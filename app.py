@@ -2290,7 +2290,7 @@ else:
 <div class="page-header">
 
 <div class="page-header-title">
-♻️ EcoBin AI Detection Center
+♻️ EcoBin AI Overflow Detection
 </div>
 
 <div class="page-header-sub">
