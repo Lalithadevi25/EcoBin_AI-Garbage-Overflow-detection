@@ -21,7 +21,7 @@ from streamlit_geolocation import streamlit_geolocation
 # ============================================================
 
 st.set_page_config(
-    page_title="EcoBin AI",
+    page_title="EcoBin-AI",
     page_icon="♻️",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -1958,7 +1958,7 @@ Smart Garbage Overflow Detection using Artificial Intelligence
 </div>
 
 <div class="hero-career">
-AI Career for Women
+👩🏻‍💻 AI Career for Women
 </div>
 
 <div class="hero-capstone">
@@ -1966,7 +1966,7 @@ Capstone Project
 </div>
 
 <div class="hero-project-name">
-♻️ EcoBin AI
+♻️ EcoBin-AI
 </div>
 
 </div>
